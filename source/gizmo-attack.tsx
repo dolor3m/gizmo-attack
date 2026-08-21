@@ -119,7 +119,6 @@ export function GizmoAttack() {
               onContinue={() => e?.continueRun()}
               onNewGame={() => e?.newGame()}
               hasSave={hud.hasSave}
-              best={best}
               ready={hud.ready}
               loadProgress={hud.loadProgress}
             />
@@ -269,38 +268,58 @@ function SiteNav() {
     { href: "https://gizmokitten.io/shop/shop.html", label: "SHOP", icon: "fa-store" },
   ];
   return (
-    <nav className="shrink-0 border-b border-[#f7931a]/30 bg-[#0A0A0A] text-white">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-3 sm:h-20 sm:px-6">
-        <a href="https://gizmokitten.io" className="min-w-0">
-          <span className="block font-['Playfair_Display',serif] text-xl font-bold tracking-tight sm:text-2xl">
-            GIZMO
-          </span>
-          <span className="-mt-1 block text-[11px] text-[#f7931a] sm:text-sm">imaginary kitten</span>
-        </a>
-        <div className="hidden items-center gap-5 text-sm font-medium md:flex lg:gap-7">
-          {links.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className={`tracking-wide transition-colors hover:text-[#f7931a] ${l.active ? "text-[#f7931a]" : "text-white"}`}
-            >
-              {l.label}
-            </a>
-          ))}
-        </div>
-        <a
-          href="https://gizmokitten.io/support/support.html"
-          className="shrink-0 rounded-2xl bg-[#f7931a] px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 sm:px-5 sm:py-2.5 sm:text-sm"
-        >
-          SUPPORT GIZMO
-        </a>
-      </div>
-      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 pb-3 text-[11px] text-[#ccc] md:hidden">
-        {links.map((l) => (
-          <a key={l.label} href={l.href} className={l.active ? "text-[#f7931a]" : "hover:text-[#f7931a]"}>
-            {l.label}
+    <nav
+      className="shrink-0 border-b border-[#f7931a]/30 bg-[#0A0A0A] text-white"
+      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex h-20 items-center justify-between">
+          <a href="https://gizmokitten.io" className="flex items-center">
+            <div>
+              <span
+                className="block text-2xl font-bold tracking-tight"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                GIZMO
+              </span>
+              <span className="-mt-1 block text-sm text-[#f7931a]">imaginary kitten</span>
+            </div>
           </a>
-        ))}
+          <div className="hidden items-center gap-6 text-sm font-medium md:flex lg:gap-8">
+            {links.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className={`flex items-center gap-1 font-medium tracking-[0.5px] transition-colors hover:text-[#f7931a] ${
+                  l.active ? "text-[#f7931a]" : "text-white"
+                }`}
+              >
+                <i className={`fas ${l.icon}`} /> {l.label}
+              </a>
+            ))}
+          </div>
+          <a
+            href="https://gizmokitten.io/support/support.html"
+            className="rounded-2xl bg-[#f7931a] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 sm:px-6"
+          >
+            SUPPORT GIZMO
+          </a>
+        </div>
+        <div className="pb-4 md:hidden">
+          <div className="flex flex-wrap justify-center gap-1.5 px-1">
+            {links.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className={`min-w-[68px] rounded-xl px-2 py-2.5 text-center text-[9.5px] font-medium whitespace-nowrap transition-colors ${
+                  l.active ? "bg-[#f7931a] text-[#0A0A0A]" : "bg-white/8 text-white hover:bg-[#f7931a]/20"
+                }`}
+              >
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </nav>
   );
@@ -507,7 +526,6 @@ function TitleOverlay({
   onContinue,
   onNewGame,
   hasSave,
-  best,
   ready,
   loadProgress,
 }: {
@@ -515,28 +533,27 @@ function TitleOverlay({
   onContinue: () => void;
   onNewGame: () => void;
   hasSave: boolean;
-  best: number;
   ready: boolean;
   loadProgress: number;
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(loadProgress * 100)));
   return (
-    <div className="absolute inset-0 overflow-auto bg-bg">
+    <div className="absolute inset-0 overflow-auto bg-black">
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-55"
-        style={{ backgroundImage: `url(${assetUrl("cover.jpg?v=3")})` }}
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${assetUrl("cover.png?v=5")})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/25" />
       <div className="relative mx-auto flex min-h-full max-w-lg flex-col justify-center gap-5 px-5 py-10">
         <div>
-          <p className="text-[11px] tracking-[0.22em] text-muted uppercase">Gizmo Kitten · tower defense</p>
+          <p className="text-[11px] tracking-[0.22em] text-white/70 uppercase">Gizmo Kitten · tower defense</p>
           <h2 className="mt-1 font-display text-4xl leading-none font-semibold sm:text-5xl">Gizmo Attack</h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/80">
             Twenty lands. Villain Gizmos march, shoot back, and will topple a post if you leave it exposed. Place
             towers, farm gold, and hold every vault from the garden to the Village.
           </p>
         </div>
-        <ul className="grid gap-2 text-sm text-muted">
+        <ul className="grid gap-2 text-sm text-white/80">
           <li className="flex gap-2">
             <Wind className="mt-0.5 size-4 shrink-0 text-accent" />
             Archer, Warrior, Mage, Ork, Horseman, Sorcerer, Tyrant, Warlord.
@@ -562,7 +579,6 @@ function TitleOverlay({
                 {ready ? "Enter the garden" : "Loading…"}
               </Action>
             )}
-            {best > 0 ? <span className="text-xs text-faint">Best {best}</span> : null}
           </div>
           <div className="w-full max-w-xs">
             <div className="mb-1 flex items-center justify-between text-[10px] tracking-wide text-accent uppercase">
@@ -577,7 +593,7 @@ function TitleOverlay({
             </div>
           </div>
         </div>
-        <p className="text-[11px] text-faint">
+        <p className="text-[11px] text-white/50">
           {hasSave
             ? "Progress is saved on this device. Continue picks up land, gold, lives, and towers."
             : "Keys 1–5 place towers · Space starts the wave · F speeds up · P pauses"}
