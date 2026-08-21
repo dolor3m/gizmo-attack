@@ -33,6 +33,50 @@ import {
 } from "./config";
 import { AudioBus } from "./audio";
 
+const SAVE_KEY = "gizmo-attack-save-v1";
+const SAVE_VER = 1;
+
+type SaveBlob = {
+  v: number;
+  phase: Phase;
+  paused: boolean;
+  gold: number;
+  lives: number;
+  wave: number;
+  levelIndex: number;
+  speed: 1 | 2;
+  kills: number;
+  leaks: number;
+  nid: number;
+  time: number;
+  spawning: boolean;
+  spawners: { type: EnemyId; left: number; cd: number; interval: number }[];
+  occ: string[];
+  towers: Tower[];
+  enemies: Enemy[];
+};
+
+function readSave(): SaveBlob | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as SaveBlob;
+    if (!data || data.v !== SAVE_VER) return null;
+    if (typeof data.gold !== "number" || typeof data.levelIndex !== "number") return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function clearSave() {
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export type Phase = "title" | "build" | "combat" | "paused" | "defeat" | "victory" | "advance";
 
 export type Hud = {
@@ -72,6 +116,7 @@ export type Hud = {
   nextName: string | null;
   ready: boolean;
   loadProgress: number;
+  hasSave: boolean;
 };
 
 type Enemy = {
@@ -161,21 +206,35 @@ type Assets = {
   village: HTMLImageElement | null;
 };
 
-function assetUrl(path: string) {
-  const root =
-    (typeof window !== "undefined" && (window as unknown as { __GIZMO_ASSETS?: string }).__GIZMO_ASSETS) ||
-    "/gizmo-attack";
-  return `${String(root).replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+function assetBases() {
+  const extra =
+    typeof window !== "undefined"
+      ? (window as unknown as { __GIZMO_ASSETS?: string }).__GIZMO_ASSETS
+      : undefined;
+  return [...new Set([extra, "./gizmo-attack", ".", "/gizmo-attack"].filter(Boolean) as string[])];
 }
 
-function loadImg(src: string) {
+function assetUrl(path: string, base?: string) {
+  const root = (base || assetBases()[0] || "/gizmo-attack").replace(/\/$/, "");
+  return `${root}/${path.replace(/^\//, "")}`;
+}
+
+function tryImg(src: string) {
   return new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
+    img.onload = () => resolve(img.width > 0 ? img : null);
     img.onerror = () => resolve(null);
     img.src = src;
   });
+}
+
+async function loadImg(path: string) {
+  const clean = path.replace(/^\//, "");
+  for (const base of assetBases()) {
+    const img = await tryImg(assetUrl(clean, base));
+    if (img) return img;
+  }
+  return null;
 }
 
 function hypot2(ax: number, ay: number, bx: number, by: number) {
@@ -241,6 +300,7 @@ export class GizmoEngine {
   private ready = false;
   private loadProgress = 0;
   private looping = false;
+  private saveTimer = 0;
 
   private level: LevelDef = LEVELS[0]!;
   private path = rasterPath(LEVELS[0]!.waypoints);
@@ -325,10 +385,29 @@ export class GizmoEngine {
   play() {
     this.audio.unlock();
     if (!this.ready) return;
-    if (this.phase === "title") {
-      this.phase = "build";
-      this.emit();
+    if (this.phase !== "title") return;
+    if (readSave()) {
+      this.continueRun();
+      return;
     }
+    this.phase = "build";
+    this.persist();
+    this.emit();
+  }
+
+  continueRun() {
+    this.audio.unlock();
+    if (!this.ready) return;
+    if (!this.restore()) {
+      this.phase = "build";
+    }
+    this.emit();
+  }
+
+  newGame() {
+    this.audio.unlock();
+    clearSave();
+    this.restart();
   }
 
   attachCanvas(canvas: HTMLCanvasElement, onHud: (h: Hud) => void) {
@@ -373,6 +452,7 @@ export class GizmoEngine {
     this.floats = [];
     this.applyLevel(0);
     this.phase = "build";
+    this.persist();
     this.emit();
   }
 
@@ -599,6 +679,8 @@ export class GizmoEngine {
     this.canvas.addEventListener("pointerleave", this.onLeave);
     window.addEventListener("keydown", this.onKey);
     window.addEventListener("resize", this.onResize);
+    window.addEventListener("pagehide", this.onPageHide);
+    document.addEventListener("visibilitychange", this.onVisibility);
   }
   private unbind() {
     this.canvas.removeEventListener("pointerdown", this.onDown);
@@ -606,9 +688,15 @@ export class GizmoEngine {
     this.canvas.removeEventListener("pointerleave", this.onLeave);
     window.removeEventListener("keydown", this.onKey);
     window.removeEventListener("resize", this.onResize);
+    window.removeEventListener("pagehide", this.onPageHide);
+    document.removeEventListener("visibilitychange", this.onVisibility);
   }
 
   private onResize = () => this.resize();
+  private onPageHide = () => this.persist(true);
+  private onVisibility = () => {
+    if (document.visibilityState === "hidden") this.persist(true);
+  };
   private onLeave = () => {
     this.hoverC = -1;
     this.hoverR = -1;
@@ -715,14 +803,14 @@ export class GizmoEngine {
     const tids: TowerId[] = ["scratch", "yarn", "laser", "mortar", "catnip"];
     const tileNames = ["garden", "forest", "castle", "dunes", "magma", "path", "grass", "pad", "water", "lava"];
     const jobs: Promise<HTMLImageElement | null>[] = [
-      loadImg(assetUrl("tiles/pad.jpg")),
-      ...ENEMY_IDS.map((id) => loadImg(assetUrl(`enemies/${id}.png?v=10`))),
-      ...tids.map((id) => loadImg(assetUrl(`towers/${id}.png`))),
-      ...[0, 1, 2, 3].map((i) => loadImg(assetUrl(`fx/yarn-${i}.png`))),
-      ...[0, 1, 2, 3].map((i) => loadImg(assetUrl(`fx/hairball-${i}.png`))),
-      ...tileNames.map((n) => loadImg(assetUrl(`tiles/${n}.jpg`))),
-      loadImg(assetUrl("fx/gate.png")),
-      loadImg(assetUrl("fx/village.png")),
+      loadImg("tiles/pad.jpg"),
+      ...ENEMY_IDS.map((id) => loadImg(`enemies/${id}.png?v=11`)),
+      ...tids.map((id) => loadImg(`towers/${id}.png`)),
+      ...[0, 1, 2, 3].map((i) => loadImg(`fx/yarn-${i}.png`)),
+      ...[0, 1, 2, 3].map((i) => loadImg(`fx/hairball-${i}.png`)),
+      ...tileNames.map((n) => loadImg(`tiles/${n}.jpg`)),
+      loadImg("fx/gate.png"),
+      loadImg("fx/village.png"),
     ];
     const total = jobs.length;
     let done = 0;
@@ -1348,7 +1436,100 @@ export class GizmoEngine {
       nextName: next?.name ?? null,
       ready: this.ready,
       loadProgress: this.loadProgress,
+      hasSave: Boolean(readSave()),
     });
+    if (
+      this.phase === "build" ||
+      this.phase === "combat" ||
+      this.phase === "paused" ||
+      this.phase === "advance"
+    ) {
+      this.scheduleSave();
+    }
+    if (this.phase === "defeat" || this.phase === "victory") {
+      clearSave();
+    }
+  }
+
+  private scheduleSave() {
+    window.clearTimeout(this.saveTimer);
+    this.saveTimer = window.setTimeout(() => this.persist(), 280);
+  }
+
+  private persist(immediate = false) {
+    if (immediate) {
+      window.clearTimeout(this.saveTimer);
+      this.saveTimer = 0;
+    }
+    if (
+      this.phase !== "build" &&
+      this.phase !== "combat" &&
+      this.phase !== "paused" &&
+      this.phase !== "advance"
+    ) {
+      return;
+    }
+    const blob: SaveBlob = {
+      v: SAVE_VER,
+      phase: this.phase === "paused" ? this.prePause : this.phase,
+      paused: this.phase === "paused",
+      gold: this.gold,
+      lives: this.lives,
+      wave: this.wave,
+      levelIndex: this.levelIndex,
+      speed: this.speed,
+      kills: this.kills,
+      leaks: this.leaks,
+      nid: this.nid,
+      time: this.time,
+      spawning: this.spawning,
+      spawners: this.spawners.map((s) => ({ ...s })),
+      occ: [...this.occ],
+      towers: this.towers.map((t) => ({ ...t })),
+      enemies: this.enemies
+        .filter((e) => e.alive || e.death > 0)
+        .map((e) => ({ ...e })),
+    };
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(blob));
+    } catch {
+      /* ignore quota */
+    }
+  }
+
+  private restore() {
+    const data = readSave();
+    if (!data) return false;
+    const idx = Math.max(0, Math.min(LEVELS.length - 1, data.levelIndex | 0));
+    this.applyLevel(idx);
+    this.gold = data.gold;
+    this.lives = data.lives;
+    this.wave = Math.max(1, Math.min(WAVES_PER_LEVEL, data.wave | 0));
+    this.speed = data.speed === 2 ? 2 : 1;
+    this.kills = data.kills | 0;
+    this.leaks = data.leaks | 0;
+    this.nid = Math.max(1, data.nid | 0);
+    this.time = data.time || 0;
+    this.spawning = Boolean(data.spawning);
+    this.spawners = Array.isArray(data.spawners) ? data.spawners.map((s) => ({ ...s })) : [];
+    this.towers = Array.isArray(data.towers) ? data.towers.map((t) => ({ ...t })) : [];
+    this.enemies = Array.isArray(data.enemies) ? data.enemies.map((e) => ({ ...e })) : [];
+    this.occ = new Set(data.occ || []);
+    this.shots = [];
+    this.beams = [];
+    this.puffs = [];
+    this.floats = [];
+    this.shop = null;
+    this.selectedId = null;
+    this.shake = 0;
+    const phase = data.phase;
+    if (phase === "combat" || phase === "build" || phase === "advance") {
+      this.phase = data.paused ? "paused" : phase;
+      this.prePause = phase;
+    } else {
+      this.phase = "build";
+    }
+    return true;
   }
 
   private draw() {

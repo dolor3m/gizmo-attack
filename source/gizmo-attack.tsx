@@ -34,6 +34,7 @@ const EMPTY: Hud = {
   nextName: "Whisperwood",
   ready: false,
   loadProgress: 0,
+  hasSave: false,
 };
 
 const BEST_KEY = "gizmo-attack-best";
@@ -115,6 +116,9 @@ export function GizmoAttack() {
           {hud.phase === "title" ? (
             <TitleOverlay
               onPlay={() => e?.play()}
+              onContinue={() => e?.continueRun()}
+              onNewGame={() => e?.newGame()}
+              hasSave={hud.hasSave}
               best={best}
               ready={hud.ready}
               loadProgress={hud.loadProgress}
@@ -500,11 +504,17 @@ function UpgradePanel({
 
 function TitleOverlay({
   onPlay,
+  onContinue,
+  onNewGame,
+  hasSave,
   best,
   ready,
   loadProgress,
 }: {
   onPlay: () => void;
+  onContinue: () => void;
+  onNewGame: () => void;
+  hasSave: boolean;
   best: number;
   ready: boolean;
   loadProgress: number;
@@ -538,9 +548,20 @@ function TitleOverlay({
         </ul>
         <div className="flex flex-col items-start gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Action onClick={onPlay} disabled={!ready}>
-              {ready ? "Enter the garden" : "Loading…"}
-            </Action>
+            {hasSave ? (
+              <>
+                <Action onClick={onContinue} disabled={!ready}>
+                  {ready ? "Continue" : "Loading…"}
+                </Action>
+                <Ghost onClick={onNewGame} disabled={!ready}>
+                  New game
+                </Ghost>
+              </>
+            ) : (
+              <Action onClick={onPlay} disabled={!ready}>
+                {ready ? "Enter the garden" : "Loading…"}
+              </Action>
+            )}
             {best > 0 ? <span className="text-xs text-faint">Best {best}</span> : null}
           </div>
           <div className="w-full max-w-xs">
@@ -556,7 +577,11 @@ function TitleOverlay({
             </div>
           </div>
         </div>
-        <p className="text-[11px] text-faint">Keys 1–5 place towers · Space starts the wave · F speeds up · P pauses</p>
+        <p className="text-[11px] text-faint">
+          {hasSave
+            ? "Progress is saved on this device. Continue picks up land, gold, lives, and towers."
+            : "Keys 1–5 place towers · Space starts the wave · F speeds up · P pauses"}
+        </p>
       </div>
     </div>
   );
@@ -597,12 +622,13 @@ function Action({ children, onClick, disabled }: { children: ReactNode; onClick:
   );
 }
 
-function Ghost({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+function Ghost({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-fg"
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-medium text-fg disabled:opacity-40"
     >
       {children}
     </button>
