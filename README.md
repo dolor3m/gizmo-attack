@@ -1,17 +1,16 @@
 # Gizmo Attack
 
-Tower defense for [gizmokitten.io](https://gizmokitten.io).
+Play here: **https://dolor3m.github.io/gizmo-attack/**
 
-## Put it on your site
+## On gizmokitten.io
 
-1. Download this repo as a zip (Code → Download ZIP), or clone it.
-2. Upload the folder to `games/gizmo-attack/` on Hostinger.
-3. On `games.html` use:
+Upload this whole folder to `games/gizmo-attack/` then on `games.html`:
 
 ```html
-<a href="gizmo-attack/gizmo-attack.html" class="game-tile block">
+<a href="gizmo-attack/index.html" class="game-tile block">
 ```
 
-Open: `https://gizmokitten.io/games/gizmo-attack/gizmo-attack.html`
+Open: `https://gizmokitten.io/games/gizmo-attack/index.html`
 
-Do not link to any `.tsx` file. The playable page is `gizmo-attack.html`.
+Do not open the files from Finder / Explorer (file://). They must be served by a website.
+Do not link to any `.tsx` file.
