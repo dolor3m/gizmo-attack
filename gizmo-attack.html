@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gizmo Attack • Gizmo's Games</title>
+  <link rel="icon" href="https://gizmokitten.io/favicon.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap');
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      background: #0A0A0A; color: white;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    body { display: flex; flex-direction: column; }
+    .logo-font { font-family: 'Playfair Display', serif; }
+    .nav-link { transition: all 0.3s ease; font-weight: 500; letter-spacing: 0.5px; }
+    .nav-link:hover { color: #f7931a; }
+    .nav-link.active { color: #f7931a; }
+    .game-wrapper { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+    .game-container { flex: 1; display: flex; flex-direction: column; background: #000; min-width: 0; }
+    .game-container iframe { flex: 1; width: 100%; height: 100%; border: none; background: #000; }
+    .mobile-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 12px; padding: 0 8px; font-size: 12px; }
+    .mobile-nav .nav-link { color: #ccc; }
+    .mobile-nav .nav-link.active { color: #f7931a; }
+  </style>
+</head>
+<body>
+  <nav class="bg-[#0A0A0A] text-white border-b border-[#f7931a]/30 flex-shrink-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex justify-between items-center h-20">
+        <a href="https://gizmokitten.io" class="flex items-center">
+          <div>
+            <span class="logo-font text-2xl font-bold tracking-tight">GIZMO</span>
+            <span class="text-[#f7931a] text-sm block -mt-1">imaginary kitten</span>
+          </div>
+        </a>
+        <div class="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium">
+          <a href="https://gizmokitten.io" class="nav-link flex items-center gap-1"><i class="fas fa-home"></i> HOME</a>
+          <a href="https://gizmokitten.io/gifs/gifs.html" class="nav-link flex items-center gap-1"><i class="fas fa-image"></i> GIFS</a>
+          <a href="https://gizmokitten.io/animations/animations.html" class="nav-link flex items-center gap-1"><i class="fas fa-film"></i> ANIMATIONS</a>
+          <a href="https://gizmokitten.io/music/music.html" class="nav-link flex items-center gap-1"><i class="fas fa-music"></i> MUSIC</a>
+          <a href="https://gizmokitten.io/games/games.html" class="nav-link active flex items-center gap-1"><i class="fas fa-gamepad"></i> GAMES</a>
+          <a href="https://gizmokitten.io/comics/comics.html" class="nav-link flex items-center gap-1"><i class="fas fa-book"></i> COMICS</a>
+          <a href="https://gizmokitten.io/shop/shop.html" class="nav-link flex items-center gap-1"><i class="fas fa-store"></i> SHOP</a>
+        </div>
+        <a href="https://gizmokitten.io/support/support.html"
+           class="px-5 sm:px-6 py-2.5 bg-[#f7931a] hover:bg-orange-600 text-white rounded-2xl font-semibold text-sm transition-colors">
+          SUPPORT GIZMO
+        </a>
+      </div>
+    </div>
+    <div class="md:hidden pb-4 bg-[#0A0A0A]">
+      <div class="mobile-nav">
+        <a href="https://gizmokitten.io" class="nav-link">HOME</a>
+        <a href="https://gizmokitten.io/gifs/gifs.html" class="nav-link">GIFS</a>
+        <a href="https://gizmokitten.io/animations/animations.html" class="nav-link">ANIMATIONS</a>
+        <a href="https://gizmokitten.io/music/music.html" class="nav-link">MUSIC</a>
+        <a href="https://gizmokitten.io/games/games.html" class="nav-link active">GAMES</a>
+        <a href="https://gizmokitten.io/comics/comics.html" class="nav-link">COMICS</a>
+        <a href="https://gizmokitten.io/shop/shop.html" class="nav-link">SHOP</a>
+      </div>
+    </div>
+  </nav>
+  <div class="game-wrapper">
+    <div class="game-container">
+      <iframe id="game-frame" src="index.html" title="Gizmo Attack" allow="fullscreen"></iframe>
+    </div>
+  </div>
+</body>
+</html>
