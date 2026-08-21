@@ -538,22 +538,22 @@ function TitleOverlay({
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(loadProgress * 100)));
   return (
-    <div className="absolute inset-0 overflow-auto bg-black">
+    <div className="absolute inset-0 overflow-auto bg-bg">
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center opacity-55"
         style={{ backgroundImage: `url(${assetUrl("cover.png?v=5")})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/25" />
+      <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/30" />
       <div className="relative mx-auto flex min-h-full max-w-lg flex-col justify-center gap-5 px-5 py-10">
         <div>
-          <p className="text-[11px] tracking-[0.22em] text-white/70 uppercase">Gizmo Kitten · tower defense</p>
+          <p className="text-[11px] tracking-[0.22em] text-muted uppercase">Gizmo Kitten · tower defense</p>
           <h2 className="mt-1 font-display text-4xl leading-none font-semibold sm:text-5xl">Gizmo Attack</h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-white/80">
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
             Twenty lands. Villain Gizmos march, shoot back, and will topple a post if you leave it exposed. Place
             towers, farm gold, and hold every vault from the garden to the Village.
           </p>
         </div>
-        <ul className="grid gap-2 text-sm text-white/80">
+        <ul className="grid gap-2 text-sm text-muted">
           <li className="flex gap-2">
             <Wind className="mt-0.5 size-4 shrink-0 text-accent" />
             Archer, Warrior, Mage, Ork, Horseman, Sorcerer, Tyrant, Warlord.
@@ -593,7 +593,7 @@ function TitleOverlay({
             </div>
           </div>
         </div>
-        <p className="text-[11px] text-white/50">
+        <p className="text-[11px] text-faint">
           {hasSave
             ? "Progress is saved on this device. Continue picks up land, gold, lives, and towers."
             : "Keys 1–5 place towers · Space starts the wave · F speeds up · P pauses"}

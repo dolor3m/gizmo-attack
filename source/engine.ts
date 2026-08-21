@@ -1242,6 +1242,22 @@ export class GizmoEngine {
       this.gold += e.gold;
       this.audio.kill();
       this.floats.push({ x: e.x, y: e.y - 16, text: `+${e.gold}`, life: 0.7, color: "#e6d3b3" });
+      if (e.type === "warlord") {
+        const gain = 2;
+        const cap = START_LIVES + 10;
+        const before = this.lives;
+        this.lives = Math.min(cap, this.lives + gain);
+        const got = this.lives - before;
+        if (got > 0) {
+          this.floats.push({
+            x: e.x,
+            y: e.y - 34,
+            text: `+${got} ${got === 1 ? "life" : "lives"}`,
+            life: 1.1,
+            color: "#c45c4a",
+          });
+        }
+      }
       const n = 10 + Math.floor(e.scale * 6);
       for (let i = 0; i < n; i++) {
         const a = Math.random() * Math.PI * 2;

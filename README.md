@@ -1,24 +1,26 @@
 # Gizmo Attack
 
-This repo is the **React game** (same look as the .tsx preview). GitHub itself is only storage. Your Hostinger games page can open it in a **new window**.
-
-## Link from gizmokitten.io
-
-In `games.html` (Hostinger), use `target="_blank"` so Hostinger stays as the arcade and the game runs elsewhere:
-
-```html
-<a href="https://cdn.jsdelivr.net/gh/dolor3m/gizmo-attack@main/index.html"
-   target="_blank" rel="noopener"
-   class="game-tile block">
-```
-
-Screenshot on the tile can stay a file you host:
-
-```html
-<img src="gizmo-attack/screenshot-gizmo-attack.png" alt="Gizmo Attack">
-```
+Playable tower defense for [gizmokitten.io](https://gizmokitten.io).
 
 ## Download
 
-Code → Download ZIP, or:
+Code → **Download ZIP**
+
 https://github.com/dolor3m/gizmo-attack/archive/refs/heads/main.zip
+
+## Upload to Hostinger
+
+Put the unzipped files in `games/gizmo-attack/`. Arcade tile:
+
+```html
+<a href="gizmo-attack/index.html" class="game-tile block">
+```
+
+Do not link a `.tsx` file.
+
+## What’s in this build
+
+- Same villain stats on every land
+- Slightly more creeps from land 2 onward
+- Warlord kills restore 2 lives
+- Battlefield title art, Catfish-matching nav, local save

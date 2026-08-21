@@ -430,13 +430,14 @@ const MAGMA_WAVES: WaveDef[] = [
 ];
 
 function bump(waves: WaveDef[], t: number): WaveDef[] {
-  const cm = 1 + t * 0.1;
-  const im = Math.max(0.36, 1 - t * 0.03);
+  if (t <= 0) return waves;
+  const cm = 1 + t * 0.045;
+  const im = Math.max(0.62, 1 - t * 0.012);
   return waves.map((w) => ({
     entries: w.entries.map((e) => ({
       ...e,
       count: Math.max(1, Math.round(e.count * cm)),
-      interval: Math.max(0.2, Math.round(e.interval * im * 100) / 100),
+      interval: Math.max(0.22, Math.round(e.interval * im * 100) / 100),
     })),
   }));
 }
@@ -449,10 +450,11 @@ function L(
   const { tier: i, ...rest } = partial;
   return {
     ...rest,
-    hpMult: 2.12 + Math.max(0, i - 6) * 0.1,
-    speedMult: 1.24 + Math.max(0, i - 6) * 0.018,
-    goldMult: 1.3 + Math.max(0, i - 6) * 0.02,
-    atkMult: 1.52 + Math.max(0, i - 6) * 0.04,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(rest.waves, i),
   };
 }
 
@@ -536,11 +538,11 @@ export const LEVELS: LevelDef[] = [
     water: ["9,6", "10,6", "11,6", "11,7", "13,5"],
     lava: [],
     hazards: [],
-    hpMult: 1.18,
-    speedMult: 1.06,
-    goldMult: 1.05,
-    atkMult: 1.1,
-    waves: FOREST_WAVES,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(FOREST_WAVES, 1),
   },
   {
     id: "maze",
@@ -594,11 +596,11 @@ export const LEVELS: LevelDef[] = [
     water: [],
     lava: [],
     hazards: [],
-    hpMult: 1.34,
-    speedMult: 1.1,
-    goldMult: 1.1,
-    atkMult: 1.18,
-    waves: MAZE_WAVES,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(MAZE_WAVES, 2),
   },
   {
     id: "castle",
@@ -634,11 +636,11 @@ export const LEVELS: LevelDef[] = [
     water: ["1,4", "2,4", "3,4", "14,4", "15,4", "16,4", "1,5", "16,5", "8,6"],
     lava: [],
     hazards: [{ kind: "fountain", c: 8, r: 5.6, radius: 0.9 }],
-    hpMult: 1.52,
-    speedMult: 1.12,
-    goldMult: 1.15,
-    atkMult: 1.28,
-    waves: CASTLE_WAVES,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(CASTLE_WAVES, 3),
   },
   {
     id: "dunes",
@@ -667,11 +669,11 @@ export const LEVELS: LevelDef[] = [
       { kind: "sand", c: 11.5, r: 6.2, ampC: 0.6, ampR: 1.8, radius: 1.15, period: 4.2 },
       { kind: "sand", c: 2.5, r: 5, ampC: 0.8, ampR: 1.4, radius: 1.05, period: 6 },
     ],
-    hpMult: 1.72,
-    speedMult: 1.18,
-    goldMult: 1.2,
-    atkMult: 1.38,
-    waves: DUNE_WAVES,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(DUNE_WAVES, 4),
   },
   {
     id: "magma",
@@ -721,11 +723,11 @@ export const LEVELS: LevelDef[] = [
       { kind: "lava", c: 6, r: 5.5, radius: 1.1 },
       { kind: "lava", c: 10.5, r: 6.5, radius: 1.05 },
     ],
-    hpMult: 2.05,
-    speedMult: 1.22,
-    goldMult: 1.28,
-    atkMult: 1.5,
-    waves: MAGMA_WAVES,
+    hpMult: 1,
+    speedMult: 1,
+    goldMult: 1,
+    atkMult: 1,
+    waves: bump(MAGMA_WAVES, 5),
   },
   L({
     id: "brook",
@@ -749,7 +751,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [{ kind: "fountain", c: 4.5, r: 3.4, radius: 0.8 }],
     tier: 6,
-    waves: bump(FOREST_WAVES, 1),
+    waves: FOREST_WAVES,
   }),
   L({
     id: "orchard",
@@ -775,7 +777,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 7,
-    waves: bump(MAZE_WAVES, 1),
+    waves: MAZE_WAVES,
   }),
   L({
     id: "river",
@@ -801,7 +803,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 8,
-    waves: bump(CASTLE_WAVES, 1),
+    waves: CASTLE_WAVES,
   }),
   L({
     id: "moat",
@@ -827,7 +829,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [{ kind: "fountain", c: 9, r: 5, radius: 0.85 }],
     tier: 9,
-    waves: bump(CASTLE_WAVES, 2),
+    waves: CASTLE_WAVES,
   }),
   L({
     id: "pass",
@@ -855,7 +857,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 10,
-    waves: bump(DUNE_WAVES, 2),
+    waves: DUNE_WAVES,
   }),
   L({
     id: "oasis",
@@ -884,7 +886,7 @@ export const LEVELS: LevelDef[] = [
       { kind: "sand", c: 12.5, r: 6.5, ampC: 1.4, ampR: 1.6, radius: 1.2, period: 5.2 },
     ],
     tier: 11,
-    waves: bump(DUNE_WAVES, 3),
+    waves: DUNE_WAVES,
   }),
   L({
     id: "ruins",
@@ -912,7 +914,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 12,
-    waves: bump(MAZE_WAVES, 3),
+    waves: MAZE_WAVES,
   }),
   L({
     id: "catacombs",
@@ -940,7 +942,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 13,
-    waves: bump(CASTLE_WAVES, 4),
+    waves: CASTLE_WAVES,
   }),
   L({
     id: "ember",
@@ -969,7 +971,7 @@ export const LEVELS: LevelDef[] = [
       { kind: "lava", c: 10, r: 6.5, radius: 1.05 },
     ],
     tier: 14,
-    waves: bump(MAGMA_WAVES, 3),
+    waves: MAGMA_WAVES,
   }),
   L({
     id: "frost",
@@ -995,7 +997,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 15,
-    waves: bump(MAGMA_WAVES, 4),
+    waves: MAGMA_WAVES,
   }),
   L({
     id: "cliffs",
@@ -1023,7 +1025,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 16,
-    waves: bump(MAGMA_WAVES, 5),
+    waves: MAGMA_WAVES,
   }),
   L({
     id: "bazaar",
@@ -1065,7 +1067,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [],
     tier: 17,
-    waves: bump(MAGMA_WAVES, 6),
+    waves: MAGMA_WAVES,
   }),
   L({
     id: "warroad",
@@ -1093,7 +1095,7 @@ export const LEVELS: LevelDef[] = [
     lava: ["12,8", "13,8"],
     hazards: [{ kind: "lava", c: 13, r: 8, radius: 0.9 }],
     tier: 18,
-    waves: bump(MAGMA_WAVES, 7),
+    waves: MAGMA_WAVES,
   }),
   L({
     id: "village",
@@ -1121,7 +1123,7 @@ export const LEVELS: LevelDef[] = [
     lava: [],
     hazards: [{ kind: "fountain", c: 6.5, r: 6.5, radius: 0.8 }],
     tier: 19,
-    waves: bump(MAGMA_WAVES, 8),
+    waves: MAGMA_WAVES,
   }),
 ];
 
