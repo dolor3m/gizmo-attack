@@ -780,6 +780,9 @@ function Codex({ onClose }: { onClose: () => void }) {
               </p>
               <p>
                 Progress saves on this device. Codex is also on the title screen. Combat pauses while this book is open.
+                If the board is thin (few towers, little gold) the next wave spawns fewer villains, slower. A wipe that
+                leaves you with one post or none grants rebuild aid so you can plant a Scratch Post. Wave clear also
+                pays extra rebuild gold when two or fewer towers still stand.
               </p>
             </div>
           ) : null}
@@ -846,7 +849,9 @@ function Codex({ onClose }: { onClose: () => void }) {
               <li>Kill bounty is listed on each villain. A leak pays 25% of that bounty and costs 1 life.</li>
               <li>Warlord kill: +2 lives (cap 30).</li>
               <li>Sell a standing tower: {Math.round(SELL_RATE * 100)}% of gold invested (buy + upgrades).</li>
-              <li>Destroyed tower salvage: {Math.round(DESTROY_RATE * 100)}% of the original buy price.</li>
+              <li>Destroyed tower salvage: {Math.round(DESTROY_RATE * 100)}% of the original buy price. If that wreck leaves you with one post or none and under 90g, you get rebuild aid up to 90g so you can plant again.</li>
+              <li>The next wave watches your board. Few towers or a thin stash means fewer villains, spaced further apart (never below ~62% of the listed wave). A healthy battery fights the full roster. You will see “the path thins — rebuild” when mercy is on.</li>
+              <li>Wave clear pays extra rebuild gold if two or fewer posts remain (24g per missing post below 3).</li>
               <li>Repair: twice per post. Cost = buy × missing HP × 0.55 × (1st ×1, 2nd ×1.85).</li>
               <li>When you leave a land, leftover towers scrap for 33% of gold invested, multiplied by remaining HP (a full-health yarn returns 33% of what you spent on it; a half-dead one returns half of that).</li>
               <li>That scrap stacks on top of the land-clear gold bonus. You also gain +3 lives (capped a little above the start).</li>

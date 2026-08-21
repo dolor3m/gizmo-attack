@@ -498,16 +498,40 @@ export class GizmoEngine {
     if (this.phase !== "build") return;
     const def = this.level.waves[this.wave - 1];
     if (!def) return;
+    const m = this.mercy();
     this.spawners = def.entries.map((e) => ({
       type: e.type,
-      left: e.count,
+      left: Math.max(1, Math.round(e.count * m)),
       cd: e.delay ?? 0,
-      interval: e.interval,
+      interval: Math.round(e.interval * (2 - m) * 100) / 100,
     }));
     this.spawning = true;
     this.phase = "combat";
     this.shop = null;
+    if (m < 0.94) {
+      this.floats.push({
+        x: WORLD_W / 2,
+        y: 42,
+        text: "the path thins — rebuild",
+        life: 1.5,
+        color: "#7d9a78",
+      });
+    }
     this.emit();
+  }
+
+  private boardStrength() {
+    const hull = this.towers.reduce((n, t) => n + t.invested * (Math.max(0, t.hp) / Math.max(1, t.maxHp)), 0);
+    return this.towers.length * 55 + this.gold * 0.45 + hull * 0.3;
+  }
+
+  /** 1 = full wave. Drops toward 0.62 when towers/gold are thin so a wipe is recoverable. */
+  private mercy() {
+    const need = 190 + this.levelIndex * 32 + (this.wave - 1) * 10;
+    const have = this.boardStrength();
+    if (have >= need) return 1;
+    const ratio = Math.max(0, have / need);
+    return Math.max(0.62, 0.62 + ratio * 0.38);
   }
 
   togglePause() {
@@ -1509,8 +1533,12 @@ export class GizmoEngine {
 
   private destroyTower(t: Tower) {
     if (!this.towers.some((x) => x.id === t.id)) return;
-    const refund = Math.floor(TOWERS[t.type].cost * DESTROY_RATE);
-    this.gold += refund;
+    let refund = Math.floor(TOWERS[t.type].cost * DESTROY_RATE);
+    const left = this.towers.length - 1;
+    const after = this.gold + refund;
+    let aid = 0;
+    if (left <= 1 && after < 90) aid = 90 - after;
+    this.gold += refund + aid;
     this.towers = this.towers.filter((x) => x.id !== t.id);
     this.occ.delete(`${t.col},${t.row}`);
     if (this.selectedId === t.id) this.selectedId = null;
@@ -1519,8 +1547,8 @@ export class GizmoEngine {
     this.floats.push({
       x: t.x,
       y: t.y - 18,
-      text: refund > 0 ? `salvage +${refund}` : "tower lost",
-      life: 0.95,
+      text: aid > 0 ? `salvage +${refund} · aid +${aid}` : refund > 0 ? `salvage +${refund}` : "tower lost",
+      life: 1.05,
       color: "#e6d3b3",
     });
     for (let i = 0; i < 10; i++) {
@@ -1619,13 +1647,14 @@ export class GizmoEngine {
       return;
     }
     const bonus = 12 + this.wave * 4 + this.levelIndex * 3;
-    this.gold += bonus;
+    const rebuild = this.towers.length <= 2 ? (3 - this.towers.length) * 24 : 0;
+    this.gold += bonus + rebuild;
     this.wave += 1;
     this.phase = "build";
     this.floats.push({
       x: WORLD_W / 2,
       y: 40,
-      text: `Wave clear +${bonus}g`,
+      text: rebuild > 0 ? `Wave clear +${bonus}g · rebuild +${rebuild}g` : `Wave clear +${bonus}g`,
       life: 1.4,
       color: "#e6d3b3",
     });
