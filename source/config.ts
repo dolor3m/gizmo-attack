@@ -93,7 +93,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   archer: {
     id: "archer",
     name: "Archer",
-    hp: 39,
+    hp: 38,
     speed: 77,
     gold: 12,
     scale: 0.92,
@@ -109,7 +109,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   warrior: {
     id: "warrior",
     name: "Warrior",
-    hp: 31,
+    hp: 30,
     speed: 68,
     gold: 10,
     scale: 0.88,
@@ -125,7 +125,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   mage: {
     id: "mage",
     name: "Mage",
-    hp: 62,
+    hp: 61,
     speed: 50,
     gold: 15,
     scale: 0.96,
@@ -141,7 +141,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   ork: {
     id: "ork",
     name: "Ork",
-    hp: 91,
+    hp: 89,
     speed: 56,
     gold: 19,
     scale: 0.9,
@@ -157,7 +157,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   cavalry: {
     id: "cavalry",
     name: "Horseman",
-    hp: 194,
+    hp: 190,
     speed: 86,
     gold: 31,
     scale: 1.5,
@@ -173,7 +173,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   sorcerer: {
     id: "sorcerer",
     name: "Sorcerer",
-    hp: 114,
+    hp: 112,
     speed: 43,
     gold: 22,
     scale: 0.98,
@@ -189,7 +189,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   tyrant: {
     id: "tyrant",
     name: "Tyrant",
-    hp: 284,
+    hp: 278,
     speed: 35,
     gold: 40,
     scale: 1.14,
@@ -205,7 +205,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   warlord: {
     id: "warlord",
     name: "Warlord",
-    hp: 495,
+    hp: 485,
     speed: 26,
     gold: 61,
     scale: 1.48,
@@ -213,7 +213,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     blurb: "Commander. Twin royal swords. A blast that cooks a cluster.",
     atkKind: "blast",
     atkRange: 3.05,
-    atkDmg: 31,
+    atkDmg: 30,
     atkRate: 0.25,
     atkSplash: 1.05,
     faceNative: 1,
@@ -257,7 +257,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 130,
     range: 4.35,
     rate: 0.72,
-    damage: 45,
+    damage: 46,
     kind: "beam",
     splash: 0,
     slow: 0,
@@ -272,7 +272,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 180,
     range: 3.35,
     rate: 0.46,
-    damage: 39,
+    damage: 40,
     kind: "arc",
     splash: 1.35,
     slow: 0,
@@ -431,7 +431,7 @@ const MAGMA_WAVES: WaveDef[] = [
 
 function bump(waves: WaveDef[], t: number): WaveDef[] {
   if (t <= 0) return waves;
-  const cm = 1 + t * 0.048;
+  const cm = 1 + t * 0.03;
   const im = Math.max(0.62, 1 - t * 0.012);
   return waves.map((w) => ({
     entries: w.entries.map((e) => ({
