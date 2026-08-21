@@ -10,9 +10,30 @@ import {
   Radius,
   Zap,
   Wind,
+  CircleHelp,
+  X,
 } from "lucide-react";
 import { mountGizmoEngine, type Hud, type GizmoEngine } from "@/game/engine";
-import { TOWERS, TOWER_ORDER, ATK_DMG_MULT, DEF_HP_MULT, RNG_MULT, RATE_MULT, type TowerId } from "@/game/config";
+import {
+  TOWERS,
+  TOWER_ORDER,
+  ENEMIES,
+  ENEMY_IDS,
+  ATK_DMG_MULT,
+  DEF_HP_MULT,
+  RNG_MULT,
+  RATE_MULT,
+  START_GOLD,
+  START_LIVES,
+  WAVES_PER_LEVEL,
+  SELL_RATE,
+  DESTROY_RATE,
+  towerAtkCost,
+  towerDefCost,
+  towerRngCost,
+  towerRateCost,
+  type TowerId,
+} from "@/game/config";
 
 const EMPTY: Hud = {
   phase: "title",
@@ -53,6 +74,8 @@ export function GizmoAttack() {
   const [hud, setHud] = useState<Hud>(EMPTY);
   const [best, setBest] = useState(0);
   const [embedded, setEmbedded] = useState(false);
+  const [codex, setCodex] = useState(false);
+  const pausedForCodex = useRef(false);
 
   useEffect(() => {
     setEmbedded(
@@ -101,6 +124,21 @@ export function GizmoAttack() {
   const e = engineRef.current;
   const playing = hud.phase === "build" || hud.phase === "combat" || hud.phase === "paused";
 
+  const openCodex = () => {
+    if (hud.phase === "combat") {
+      e?.togglePause();
+      pausedForCodex.current = true;
+    }
+    setCodex(true);
+  };
+  const closeCodex = () => {
+    setCodex(false);
+    if (pausedForCodex.current) {
+      pausedForCodex.current = false;
+      if (hud.phase === "paused") e?.togglePause();
+    }
+  };
+
   return (
     <div className="flex h-dvh min-h-0 flex-col bg-[#0A0A0A] text-white">
       {embedded ? null : <SiteNav />}
@@ -118,6 +156,7 @@ export function GizmoAttack() {
               onPlay={() => e?.play()}
               onContinue={() => e?.continueRun()}
               onNewGame={() => e?.newGame()}
+              onCodex={openCodex}
               hasSave={hud.hasSave}
               ready={hud.ready}
               loadProgress={hud.loadProgress}
@@ -173,6 +212,8 @@ export function GizmoAttack() {
             </Modal>
           ) : null}
 
+          {codex ? <Codex onClose={closeCodex} /> : null}
+
           {playing ? (
             <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center px-2">
               <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-border bg-surface/90 px-2 py-1 backdrop-blur-sm">
@@ -204,6 +245,15 @@ export function GizmoAttack() {
                   aria-label="Fast forward"
                 >
                   <FastForward className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={openCodex}
+                  className="grid size-8 place-items-center rounded-md border border-border text-fg"
+                  aria-label="Game info"
+                  title="Codex"
+                >
+                  <CircleHelp className="size-3.5" />
                 </button>
               </div>
             </div>
@@ -525,6 +575,7 @@ function TitleOverlay({
   onPlay,
   onContinue,
   onNewGame,
+  onCodex,
   hasSave,
   ready,
   loadProgress,
@@ -532,6 +583,7 @@ function TitleOverlay({
   onPlay: () => void;
   onContinue: () => void;
   onNewGame: () => void;
+  onCodex: () => void;
   hasSave: boolean;
   ready: boolean;
   loadProgress: number;
@@ -579,6 +631,9 @@ function TitleOverlay({
                 {ready ? "Enter the garden" : "Loading…"}
               </Action>
             )}
+            <Ghost onClick={onCodex}>
+              <CircleHelp className="size-4" /> Codex
+            </Ghost>
           </div>
           <div className="w-full max-w-xs">
             <div className="mb-1 flex items-center justify-between text-[10px] tracking-wide text-accent uppercase">
@@ -598,6 +653,216 @@ function TitleOverlay({
             ? "Progress is saved on this device. Continue picks up land, gold, lives, and towers."
             : "Keys 1–5 place towers · Space starts the wave · F speeds up · P pauses"}
         </p>
+      </div>
+    </div>
+  );
+}
+
+const CODEX_TABS = ["How to play", "Towers", "Villains", "Economy", "Lands"] as const;
+type CodexTab = (typeof CODEX_TABS)[number];
+
+const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
+  archer: {
+    effect: "Longbow. Picks a post from range. No hex.",
+    lore: "Garden sentries who turned their bows on the village after the Warlord’s call. Paper-thin, but they never miss a lonely post.",
+  },
+  warrior: {
+    effect: "Twin daggers. Melee stab on the nearest tower.",
+    lore: "Field knives and a grin. They rush the palisade and cut whatever is closest. Cheap to stop, costly if they swarm.",
+  },
+  mage: {
+    effect: "Yellow-orb bolt. Slow caster, long range.",
+    lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
+  },
+  ork: {
+    effect: "Ground Crack. Club smash plus a fissure toward the target. Towers on that line permanently lose defense (take more damage, stacks to +40%).",
+    lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
+  },
+  cavalry: {
+    effect: "Lance poke. Fastest heavy. Hits as the horse blows by.",
+    lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
+  },
+  sorcerer: {
+    effect: "Hex Ring. Purple spell around the caster. Towers in the ring permanently lose fire rate and range (stacks, floor 68%).",
+    lore: "Adept of the purple orb. They do not chase posts — they curse the whole battery so the garden shoots slower and shorter.",
+  },
+  tyrant: {
+    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −28% attack for 4 seconds.",
+    lore: "Plate, skull-shield, and a two-handed axe. Slow as a siege, but one swipe leaves every nearby post trembling.",
+  },
+  warlord: {
+    effect: "Quake Crown. Rocky ring. Towers inside take 1.7× damage. Killing a Warlord restores 2 lives.",
+    lore: "The grinning commander. When he plants both swords, the earth stands up in a crown of stone. Bring him down and the village cheers you two lives back.",
+  },
+};
+
+const TOWER_LORE: Record<TowerId, { effect: string; lore: string }> = {
+  scratch: {
+    effect: "Claw Swipe. Fast melee plus a small cleave on neighbors.",
+    lore: "A rubbing post planted like a spear. Cats remember it; villains learn it. Cheap, tanky, and it shreds the lane lip.",
+  },
+  yarn: {
+    effect: "Yarn Spindle. Homing ball of yarn that corkscrews to the target.",
+    lore: "A siege cannon stuffed with leftover knitting. The ball never forgets a face. Mid range, honest damage.",
+  },
+  laser: {
+    effect: "Hot Dot. Instant beam, then a burn that ticks for ~1.3s.",
+    lore: "A pointer stolen from a reading lamp. Fragile wood, cruel light. Best on armored hulls that outrun yarn.",
+  },
+  catnip: {
+    effect: "Catnip Mist. Green burst. Damages a cluster and slows them.",
+    lore: "A crate of the good stuff. Villains wander, sneeze, and forget why they were running. Pair it with mortar.",
+  },
+  mortar: {
+    effect: "Hairball Boom. Arcing splash. Fat explosion on impact.",
+    lore: "A cauldron that coughs hairballs over walls. Slow to wind, rude to crowds, stout as a barn.",
+  },
+};
+
+function Codex({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<CodexTab>("How to play");
+  return (
+    <div className="absolute inset-0 z-40 grid place-items-center bg-black/70 px-3 py-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div
+        className="flex max-h-[min(92dvh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div>
+            <p className="text-[10px] tracking-[0.18em] text-muted uppercase">Gizmo Attack</p>
+            <h2 className="font-display text-2xl font-semibold">Codex</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid size-9 place-items-center rounded-md border border-border"
+            aria-label="Close"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        <div className="flex gap-1 overflow-x-auto border-b border-border px-3 py-2">
+          {CODEX_TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium ${
+                tab === t ? "bg-accent text-accent-fg" : "text-muted hover:text-fg"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm leading-relaxed text-muted">
+          {tab === "How to play" ? (
+            <div className="grid gap-3">
+              <p>
+                Villain Gizmos spawn at the <strong className="text-fg">medieval gate</strong> and march the dirt path
+                toward the <strong className="text-fg">village</strong>. If one arrives, you lose a life and recover 25%
+                of that villain’s bounty as gold. Zero lives is defeat.
+              </p>
+              <p>
+                Pick a tower (keys 1–5 or the right panel), then tap grass beside the path. Space starts the wave. F
+                speeds time. P pauses. Salvage a standing post for {Math.round(SELL_RATE * 100)}% of gold spent on it.
+                A wrecked post returns {Math.round(DESTROY_RATE * 100)}% of its buy price.
+              </p>
+              <p>
+                You begin with {START_LIVES} lives and {START_GOLD} gold. Each land has {WAVES_PER_LEVEL} waves. Clear
+                the set to march on — towers stay behind; gold and lives travel. From land 2, a few more creeps spawn
+                each map. Villain stats themselves do not grow.
+              </p>
+              <p>
+                Progress saves on this device. Codex is also on the title screen. Combat pauses while this book is open.
+              </p>
+            </div>
+          ) : null}
+          {tab === "Towers" ? (
+            <div className="grid gap-4">
+              <p>
+                Upgrades are once per post: Attack +{Math.round((ATK_DMG_MULT - 1) * 100)}%, Defense/HP +
+                {Math.round((DEF_HP_MULT - 1) * 100)}%, Range +{Math.round((RNG_MULT - 1) * 100)}%, Fire rate +
+                {Math.round((RATE_MULT - 1) * 100)}%. Repair hull twice (cost scales with missing HP; second patch is
+                dearer).
+              </p>
+              {TOWER_ORDER.map((id) => {
+                const t = TOWERS[id];
+                const lore = TOWER_LORE[id];
+                return (
+                  <div key={id} className="rounded-lg border border-border bg-raised/50 p-3">
+                    <div className="flex gap-3">
+                      <img src={assetUrl(`towers/${id}.png`)} alt="" className="size-14 object-contain" />
+                      <div>
+                        <h3 className="text-fg font-semibold">{t.name}</h3>
+                        <p className="text-[11px] text-faint">
+                          {t.cost}g · dmg {t.damage} · range {t.range} · {t.rate}/s · hull {t.hp}
+                        </p>
+                        <p className="text-[11px] text-faint">
+                          Atk up {towerAtkCost(id)}g · Def {towerDefCost(id)}g · Rng {towerRngCost(id)}g · Spd{" "}
+                          {towerRateCost(id)}g
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-accent">{lore.effect}</p>
+                    <p className="mt-1">{lore.lore}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+          {tab === "Villains" ? (
+            <div className="grid gap-4">
+              <p>They appear in this order, light to heavy. Armor reduces incoming damage. Bounty is paid on a kill.</p>
+              {ENEMY_IDS.map((id) => {
+                const v = ENEMIES[id];
+                const lore = VILLAIN_LORE[id];
+                return (
+                  <div key={id} className="rounded-lg border border-border bg-raised/50 p-3">
+                    <div className="flex gap-3">
+                      <img src={assetUrl(`enemies/${id}.png`)} alt="" className="h-16 w-12 object-contain" />
+                      <div>
+                        <h3 className="text-fg font-semibold">{v.name}</h3>
+                        <p className="text-[11px] text-faint">
+                          HP {v.hp} · spd {v.speed} · armor {Math.round(v.armor * 100)}% · atk {v.atkDmg} · range{" "}
+                          {v.atkRange} · {v.atkRate}/s · bounty {v.gold}g
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-accent">{lore.effect}</p>
+                    <p className="mt-1">{lore.lore}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+          {tab === "Economy" ? (
+            <ul className="grid list-disc gap-2 pl-4">
+              <li>Kill bounty is listed on each villain. A leak pays 25% of that bounty and costs 1 life.</li>
+              <li>Warlord kill: +2 lives (cap 30).</li>
+              <li>Sell a standing tower: {Math.round(SELL_RATE * 100)}% of gold invested (buy + upgrades).</li>
+              <li>Destroyed tower salvage: {Math.round(DESTROY_RATE * 100)}% of the original buy price.</li>
+              <li>Repair: twice per post. Cost = buy × missing HP × 0.55 × (1st ×1, 2nd ×1.85).</li>
+              <li>Land clear: bonus gold and +3 lives (lives cap a little above the start).</li>
+              <li>Progress is local to this browser until you add a cloud account.</li>
+            </ul>
+          ) : null}
+          {tab === "Lands" ? (
+            <div className="grid gap-2">
+              <p>Twenty maps. Paths get twistier. From land 2, creep counts rise about 4.5% per land. Hazards:</p>
+              <ul className="list-disc space-y-1 pl-4">
+                <li>Fountains and water — you cannot plant in the wet.</li>
+                <li>Moving sand — swallows a post if it drifts over it.</li>
+                <li>Lava — burns neighboring towers.</li>
+                <li>Hedges, cliffs, and mazes starve you of plant tiles. Place early, spend later.</li>
+              </ul>
+              <p>
+                Strategy: scratch + yarn hold the first lands. Laser burns Tyrants and Warlords. Catnip sets up mortar
+                shots. Keep one cheap post as bait so Ork cracks and Sorcerer hexes do not land on your only laser.
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
