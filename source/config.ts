@@ -93,7 +93,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   archer: {
     id: "archer",
     name: "Archer",
-    hp: 38,
+    hp: 42,
     speed: 77,
     gold: 12,
     scale: 0.92,
@@ -109,7 +109,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   warrior: {
     id: "warrior",
     name: "Warrior",
-    hp: 30,
+    hp: 34,
     speed: 68,
     gold: 10,
     scale: 0.88,
@@ -125,7 +125,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   mage: {
     id: "mage",
     name: "Mage",
-    hp: 60,
+    hp: 68,
     speed: 50,
     gold: 15,
     scale: 0.96,
@@ -141,7 +141,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   ork: {
     id: "ork",
     name: "Ork",
-    hp: 88,
+    hp: 100,
     speed: 56,
     gold: 19,
     scale: 0.9,
@@ -149,7 +149,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     blurb: "Brute. Thick hide, club smash. Slow feet, stout stamina.",
     atkKind: "smash",
     atkRange: 1.3,
-    atkDmg: 12,
+    atkDmg: 14,
     atkRate: 0.55,
     atkSplash: 0,
     faceNative: 1,
@@ -157,7 +157,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   cavalry: {
     id: "cavalry",
     name: "Horseman",
-    hp: 188,
+    hp: 210,
     speed: 86,
     gold: 31,
     scale: 1.5,
@@ -173,7 +173,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   sorcerer: {
     id: "sorcerer",
     name: "Sorcerer",
-    hp: 110,
+    hp: 125,
     speed: 43,
     gold: 22,
     scale: 0.98,
@@ -181,7 +181,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     blurb: "Adept. Purple-orb staff. Heavier bolt than the yellow mage.",
     atkKind: "spell",
     atkRange: 4.0,
-    atkDmg: 21,
+    atkDmg: 24,
     atkRate: 0.29,
     atkSplash: 0.18,
     faceNative: 1,
@@ -189,7 +189,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   tyrant: {
     id: "tyrant",
     name: "Tyrant",
-    hp: 275,
+    hp: 310,
     speed: 35,
     gold: 40,
     scale: 1.14,
@@ -197,7 +197,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     blurb: "Tyrant. Plate, skull-shield, axe. Slow and stubborn.",
     atkKind: "smash",
     atkRange: 1.65,
-    atkDmg: 23,
+    atkDmg: 26,
     atkRate: 0.38,
     atkSplash: 0.5,
     faceNative: 1,
@@ -205,7 +205,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   warlord: {
     id: "warlord",
     name: "Warlord",
-    hp: 480,
+    hp: 540,
     speed: 26,
     gold: 61,
     scale: 1.48,
@@ -213,7 +213,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     blurb: "Commander. Twin royal swords. A blast that cooks a cluster.",
     atkKind: "blast",
     atkRange: 3.05,
-    atkDmg: 30,
+    atkDmg: 34,
     atkRate: 0.25,
     atkSplash: 1.05,
     faceNative: 1,
@@ -227,7 +227,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 50,
     range: 1.65,
     rate: 2.3,
-    damage: 11,
+    damage: 10,
     kind: "melee",
     splash: 0.45,
     slow: 0,
@@ -242,7 +242,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 85,
     range: 2.85,
     rate: 1.15,
-    damage: 20,
+    damage: 18,
     kind: "homing",
     splash: 0,
     slow: 0,
@@ -257,7 +257,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 130,
     range: 4.35,
     rate: 0.72,
-    damage: 46,
+    damage: 43,
     kind: "beam",
     splash: 0,
     slow: 0,
@@ -272,7 +272,7 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     cost: 180,
     range: 3.35,
     rate: 0.46,
-    damage: 40,
+    damage: 37,
     kind: "arc",
     splash: 1.35,
     slow: 0,
@@ -289,9 +289,9 @@ export const TOWERS: Record<TowerId, TowerDef> = {
     rate: 1.05,
     damage: 8,
     kind: "spray",
-    splash: 0.7,
-    slow: 0.48,
-    slowTime: 2.3,
+    splash: 1.15,
+    slow: 0.52,
+    slowTime: 2.5,
     shotSpeed: 0,
     hp: 88,
     blurb: "Slows a cluster. Soft wood.",
@@ -431,7 +431,7 @@ const MAGMA_WAVES: WaveDef[] = [
 
 function bump(waves: WaveDef[], t: number): WaveDef[] {
   if (t <= 0) return waves;
-  const cm = 1 + t * 0.045;
+  const cm = 1 + t * 0.055;
   const im = Math.max(0.62, 1 - t * 0.012);
   return waves.map((w) => ({
     entries: w.entries.map((e) => ({

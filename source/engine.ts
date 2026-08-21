@@ -535,7 +535,11 @@ export class GizmoEngine {
       return;
     }
     const bonus = levelAdvanceGold(this.levelIndex);
-    this.gold += bonus;
+    const scrap = this.towers.reduce((n, t) => {
+      const hpRatio = Math.max(0, Math.min(1, t.hp / Math.max(1, t.maxHp)));
+      return n + Math.floor(t.invested * 0.33 * hpRatio);
+    }, 0);
+    this.gold += bonus + scrap;
     this.lives = Math.min(START_LIVES + 6, this.lives + 3);
     this.wave = 1;
     this.shop = null;
@@ -553,7 +557,7 @@ export class GizmoEngine {
     this.floats.push({
       x: WORLD_W / 2,
       y: 48,
-      text: `${this.level.name} · +${bonus}g`,
+      text: scrap > 0 ? `${this.level.name} · +${bonus}g · scrap +${scrap}g` : `${this.level.name} · +${bonus}g`,
       life: 1.8,
       color: "#e6d3b3",
     });
@@ -1073,8 +1077,8 @@ export class GizmoEngine {
     this.pushFx("spell", e.x, e.y, { r: range, max: 0.7 });
     for (const t of [...this.towers]) {
       if (hypot2(e.x, e.y, t.x, t.y) > range * range) continue;
-      t.hexRate = Math.max(0.68, (t.hexRate || 1) * 0.92);
-      t.hexRange = Math.max(0.68, (t.hexRange || 1) * 0.92);
+      t.hexRate = Math.max(0.62, (t.hexRate || 1) * 0.9);
+      t.hexRange = Math.max(0.62, (t.hexRange || 1) * 0.9);
       this.hurtTower(t, t.id === target.id ? dmg : dmg * 0.22);
       this.floats.push({ x: t.x, y: t.y - 28, text: "hexed", life: 0.55, color: "#b48cff" });
     }
@@ -1099,7 +1103,7 @@ export class GizmoEngine {
     this.hurtTower(target, dmg);
     for (const t of [...this.towers]) {
       if (distToSeg(t.x, t.y, e.x, e.y, target.x, target.y) > 32) continue;
-      t.hexVuln = Math.min(0.4, (t.hexVuln || 0) + 0.08);
+      t.hexVuln = Math.min(0.5, (t.hexVuln || 0) + 0.11);
       if (t.id !== target.id) this.hurtTower(t, dmg * 0.2);
       this.floats.push({ x: t.x, y: t.y - 26, text: "cracked", life: 0.5, color: "#c4a06a" });
     }
@@ -1136,7 +1140,7 @@ export class GizmoEngine {
       let d = Math.abs(a - ang);
       if (d > Math.PI) d = Math.PI * 2 - d;
       if (d > 1.05) continue;
-      t.hexAtkUntil = this.time + 4;
+      t.hexAtkUntil = this.time + 5;
       this.floats.push({ x: t.x, y: t.y - 28, text: "weakened", life: 0.55, color: "#c45c4a" });
     }
   }
@@ -1145,7 +1149,7 @@ export class GizmoEngine {
     this.audio.foeShoot("blast");
     this.pushFx("quake", e.x, e.y, { r: range, max: 0.75 });
     this.shake = 12;
-    const heavy = dmg * 1.7;
+    const heavy = dmg * 2;
     for (const t of [...this.towers]) {
       if (hypot2(e.x, e.y, t.x, t.y) > range * range) continue;
       this.hurtTower(t, heavy);
@@ -1240,7 +1244,7 @@ export class GizmoEngine {
       if (t.cd > 0 || !target) continue;
       const rate = def.rate * (t.rateLv ? RATE_MULT : 1) * (t.hexRate || 1);
       t.cd = 1 / Math.max(0.12, rate);
-      const weak = this.time < (t.hexAtkUntil || 0) ? 0.72 : 1;
+      const weak = this.time < (t.hexAtkUntil || 0) ? 0.65 : 1;
       const dmg = def.damage * (t.dmgLv ? ATK_DMG_MULT : 1) * weak;
       this.fire(t, target, dmg);
     }
@@ -1292,7 +1296,22 @@ export class GizmoEngine {
     }
     if (def.kind === "spray") {
       const r = def.splash * CELL;
-      this.pushFx("mist", target.x, target.y, { r: r * 1.3, max: 0.45 });
+      this.pushFx("mist", target.x, target.y, { r: r * 2.1, max: 0.95 });
+      this.pushFx("mist", target.x + 10, target.y - 6, { r: r * 1.4, max: 0.8 });
+      this.pushFx("mist", target.x - 8, target.y + 8, { r: r * 1.2, max: 0.75 });
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        this.puffs.push({
+          x: target.x,
+          y: target.y,
+          vx: Math.cos(a) * (30 + Math.random() * 40),
+          vy: Math.sin(a) * (20 + Math.random() * 28) - 12,
+          life: 0.55 + Math.random() * 0.25,
+          max: 0.8,
+          size: 10 + Math.random() * 10,
+          color: i % 3 === 0 ? "#5a9a4a" : i % 3 === 1 ? "#8fbf6a" : "#3d6e32",
+        });
+      }
       for (const e of this.enemies) {
         if (!e.alive) continue;
         if (hypot2(target.x, target.y, e.x, e.y) <= r * r) {
@@ -2122,15 +2141,23 @@ export class GizmoEngine {
         ctx.stroke();
         ctx.restore();
       } else if (f.kind === "mist") {
-        const r = f.r * (0.5 + t * 0.7);
-        ctx.fillStyle = `rgba(125,154,120,${u * 0.28})`;
+        const r = f.r * (0.55 + t * 0.85);
+        ctx.fillStyle = `rgba(55, 120, 48, ${u * 0.42})`;
         ctx.beginPath();
-        ctx.ellipse(f.x, f.y, r, r * 0.65, 0, 0, Math.PI * 2);
+        ctx.ellipse(f.x, f.y, r, r * 0.72, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = `rgba(180,210,160,${u * 0.5})`;
+        ctx.fillStyle = `rgba(110, 180, 80, ${u * 0.38})`;
+        ctx.beginPath();
+        ctx.ellipse(f.x + Math.sin(this.time * 3) * 8, f.y - 6, r * 0.7, r * 0.5, this.time * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(170, 220, 120, ${u * 0.28})`;
+        ctx.beginPath();
+        ctx.ellipse(f.x - 10, f.y + 8, r * 0.55, r * 0.4, -this.time, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(200, 240, 160, ${u * 0.55})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(f.x, f.y, r * 0.7, r * 0.45, this.time, 0, Math.PI * 2);
+        ctx.ellipse(f.x, f.y, r * 0.82, r * 0.58, this.time * 0.7, 0, Math.PI * 2);
         ctx.stroke();
       } else if (f.kind === "boom") {
         const r = f.r * (0.4 + t * 0.9);
