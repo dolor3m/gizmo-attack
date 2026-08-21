@@ -1053,7 +1053,10 @@ export class GizmoEngine {
     this.leaks++;
     this.shake = 10;
     this.audio.leak();
+    const refund = Math.max(1, Math.round(e.gold * 0.25));
+    this.gold += refund;
     this.floats.push({ x: e.x, y: e.y - 20, text: "-1 life", life: 0.9, color: "#c45c4a" });
+    this.floats.push({ x: e.x, y: e.y - 38, text: `+${refund}g`, life: 0.9, color: "#e6d3b3" });
     if (this.lives <= 0) {
       this.phase = "defeat";
       this.audio.lose();
