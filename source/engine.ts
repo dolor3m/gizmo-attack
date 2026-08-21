@@ -1077,8 +1077,8 @@ export class GizmoEngine {
     this.pushFx("spell", e.x, e.y, { r: range, max: 0.7 });
     for (const t of [...this.towers]) {
       if (hypot2(e.x, e.y, t.x, t.y) > range * range) continue;
-      t.hexRate = Math.max(0.65, (t.hexRate || 1) * 0.91);
-      t.hexRange = Math.max(0.65, (t.hexRange || 1) * 0.91);
+      t.hexRate = Math.max(0.66, (t.hexRate || 1) * 0.915);
+      t.hexRange = Math.max(0.66, (t.hexRange || 1) * 0.915);
       this.hurtTower(t, t.id === target.id ? dmg : dmg * 0.22);
       this.floats.push({ x: t.x, y: t.y - 28, text: "hexed", life: 0.55, color: "#b48cff" });
     }
@@ -1103,7 +1103,7 @@ export class GizmoEngine {
     this.hurtTower(target, dmg);
     for (const t of [...this.towers]) {
       if (distToSeg(t.x, t.y, e.x, e.y, target.x, target.y) > 32) continue;
-      t.hexVuln = Math.min(0.45, (t.hexVuln || 0) + 0.095);
+      t.hexVuln = Math.min(0.42, (t.hexVuln || 0) + 0.09);
       if (t.id !== target.id) this.hurtTower(t, dmg * 0.2);
       this.floats.push({ x: t.x, y: t.y - 26, text: "cracked", life: 0.5, color: "#c4a06a" });
     }
@@ -1140,7 +1140,7 @@ export class GizmoEngine {
       let d = Math.abs(a - ang);
       if (d > Math.PI) d = Math.PI * 2 - d;
       if (d > 1.05) continue;
-      t.hexAtkUntil = this.time + 4.5;
+      t.hexAtkUntil = this.time + 4.2;
       this.floats.push({ x: t.x, y: t.y - 28, text: "weakened", life: 0.55, color: "#c45c4a" });
     }
   }
@@ -1149,7 +1149,7 @@ export class GizmoEngine {
     this.audio.foeShoot("blast");
     this.pushFx("quake", e.x, e.y, { r: range, max: 0.75 });
     this.shake = 12;
-    const heavy = dmg * 1.85;
+    const heavy = dmg * 1.78;
     for (const t of [...this.towers]) {
       if (hypot2(e.x, e.y, t.x, t.y) > range * range) continue;
       this.hurtTower(t, heavy);
@@ -1244,7 +1244,7 @@ export class GizmoEngine {
       if (t.cd > 0 || !target) continue;
       const rate = def.rate * (t.rateLv ? RATE_MULT : 1) * (t.hexRate || 1);
       t.cd = 1 / Math.max(0.12, rate);
-      const weak = this.time < (t.hexAtkUntil || 0) ? 0.68 : 1;
+      const weak = this.time < (t.hexAtkUntil || 0) ? 0.7 : 1;
       const dmg = def.damage * (t.dmgLv ? ATK_DMG_MULT : 1) * weak;
       this.fire(t, target, dmg);
     }

@@ -676,7 +676,7 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
   },
   ork: {
-    effect: "Ground Crack. Club smash plus a fissure toward the target. Towers on that line permanently lose defense (take more damage, stacks to +45%).",
+    effect: "Ground Crack. Club smash plus a fissure toward the target. Towers on that line permanently lose defense (take more damage, stacks to +42%).",
     lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
   },
   cavalry: {
@@ -684,15 +684,15 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
   },
   sorcerer: {
-    effect: "Hex Ring. Purple spell around the caster. Towers in the ring permanently lose fire rate and range (stacks, floor 65%).",
+    effect: "Hex Ring. Purple spell around the caster. Towers in the ring permanently lose fire rate and range (stacks, floor 66%).",
     lore: "Adept of the purple orb. They do not chase posts — they curse the whole battery so the garden shoots slower and shorter.",
   },
   tyrant: {
-    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −32% attack for 4.5 seconds.",
+    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −30% attack for 4.2 seconds.",
     lore: "Plate, skull-shield, and a two-handed axe. Slow as a siege, but one swipe leaves every nearby post trembling.",
   },
   warlord: {
-    effect: "Quake Crown. Rocky ring. Towers inside take 1.85× damage. Killing a Warlord restores 2 lives.",
+    effect: "Quake Crown. Rocky ring. Towers inside take 1.78× damage. Killing a Warlord restores 2 lives.",
     lore: "The grinning commander. When he plants both swords, the earth stands up in a crown of stone. Bring him down and the village cheers you two lives back.",
   },
 };
