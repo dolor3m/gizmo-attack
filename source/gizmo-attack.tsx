@@ -676,7 +676,7 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
   },
   ork: {
-    effect: "Ground Crack. Club smash plus a fissure toward the target. Towers on that line permanently lose defense (take more damage, stacks to +50%).",
+    effect: "Ground Crack. Club smash plus a fissure toward the target. Towers on that line permanently lose defense (take more damage, stacks to +45%).",
     lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
   },
   cavalry: {
@@ -684,15 +684,15 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
   },
   sorcerer: {
-    effect: "Hex Ring. Purple spell around the caster. Towers in the ring permanently lose fire rate and range (stacks, floor 62%).",
+    effect: "Hex Ring. Purple spell around the caster. Towers in the ring permanently lose fire rate and range (stacks, floor 65%).",
     lore: "Adept of the purple orb. They do not chase posts — they curse the whole battery so the garden shoots slower and shorter.",
   },
   tyrant: {
-    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −35% attack for 5 seconds.",
+    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −32% attack for 4.5 seconds.",
     lore: "Plate, skull-shield, and a two-handed axe. Slow as a siege, but one swipe leaves every nearby post trembling.",
   },
   warlord: {
-    effect: "Quake Crown. Rocky ring. Towers inside take 2× damage. Killing a Warlord restores 2 lives.",
+    effect: "Quake Crown. Rocky ring. Towers inside take 1.85× damage. Killing a Warlord restores 2 lives.",
     lore: "The grinning commander. When he plants both swords, the earth stands up in a crown of stone. Bring him down and the village cheers you two lives back.",
   },
 };
@@ -855,7 +855,7 @@ function Codex({ onClose }: { onClose: () => void }) {
           ) : null}
           {tab === "Lands" ? (
             <div className="grid gap-2">
-              <p>Twenty maps. Paths get twistier. From land 2, creep counts rise about 5.5% per land. Hazards:</p>
+              <p>Twenty maps. Paths get twistier. From land 2, creep counts rise about 5% per land. Hazards:</p>
               <ul className="list-disc space-y-1 pl-4">
                 <li>Fountains and water — you cannot plant in the wet.</li>
                 <li>Moving sand — swallows a post if it drifts over it.</li>
