@@ -1,51 +1,24 @@
 # Gizmo Attack
 
-Download this repository, then upload the playable files to [gizmokitten.io](https://gizmokitten.io). GitHub will not run the game in the browser — it is only storage.
+This repo is the **React game** (same look as the .tsx preview). GitHub itself is only storage. Your Hostinger games page can open it in a **new window**.
 
-## 1. Download
+## Link from gizmokitten.io
 
-On this page click **Code → Download ZIP**. Unzip it. You will get a folder named `gizmo-attack-main`.
+In `games.html` (Hostinger), use `target="_blank"` so Hostinger stays as the arcade and the game runs elsewhere:
 
-## 2. Upload to Hostinger
-
-Upload the **contents** of `gizmo-attack-main` (not the zip) to:
-
-```
-games/gizmo-attack/
+```html
+<a href="https://cdn.jsdelivr.net/gh/dolor3m/gizmo-attack@main/index.html"
+   target="_blank" rel="noopener"
+   class="game-tile block">
 ```
 
-These files must sit together:
+Screenshot on the tile can stay a file you host:
 
-```
-games/gizmo-attack/index.html
-games/gizmo-attack/gizmo-attack.html
-games/gizmo-attack/screenshot-gizmo-attack.png
-games/gizmo-attack/assets/
-games/gizmo-attack/gizmo-attack/   (sprites: enemies, towers, tiles, fx)
+```html
+<img src="gizmo-attack/screenshot-gizmo-attack.png" alt="Gizmo Attack">
 ```
 
-## 3. Arcade tile
+## Download
 
-In `games.html` use `games-tile.html` (or this href):
-
-```
-href="gizmo-attack/index.html"
-```
-
-Never link `games.gizmoattack.tsx`. That is source, not a webpage.
-
-Play URL after upload:
-
-```
-https://gizmokitten.io/games/gizmo-attack/index.html
-```
-
-## Folder guide
-
-| Path | What it is |
-| --- | --- |
-| `index.html` / `gizmo-attack.html` | Game page (site nav + game) |
-| `assets/` | Game script and CSS |
-| `gizmo-attack/` | Sprites the game loads |
-| `art/` | Banners and character cards (not required to play) |
-| `source/` | React/canvas source if you want to rebuild later |
+Code → Download ZIP, or:
+https://github.com/dolor3m/gizmo-attack/archive/refs/heads/main.zip
