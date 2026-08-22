@@ -12,6 +12,7 @@ import {
   Wind,
   CircleHelp,
   X,
+  Coins,
 } from "lucide-react";
 import { mountGizmoEngine, type Hud, type GizmoEngine } from "@/game/engine";
 import {
@@ -32,6 +33,9 @@ import {
   towerDefCost,
   towerRngCost,
   towerRateCost,
+  loanPrincipal,
+  loanPovertyLine,
+  LOAN_TIERS,
   type TowerId,
 } from "@/game/config";
 
@@ -56,6 +60,10 @@ const EMPTY: Hud = {
   ready: false,
   loadProgress: 0,
   hasSave: false,
+  loanDebt: 0,
+  loanGarnish: 0,
+  loanCan: false,
+  loanOffers: [],
 };
 
 const BEST_KEY = "gizmo-attack-best";
@@ -267,6 +275,32 @@ export function GizmoAttack() {
               <Stat label="Land" value={`${hud.level}/${hud.levels}`} />
               <Stat label="Wave" value={`${hud.wave}/${hud.waves}`} />
             </div>
+            {hud.loanDebt > 0 ? (
+              <p className="rounded-md border border-border bg-raised/60 px-2 py-1 text-[11px] text-muted">
+                <Coins className="mr-1 inline size-3 text-accent" />
+                Owe <span className="text-fg tabular-nums">{hud.loanDebt}g</span>
+                {" · "}
+                {Math.round(hud.loanGarnish * 100)}% of kill gold
+              </p>
+            ) : hud.loanCan ? (
+              <div className="rounded-md border border-border bg-raised/60 p-1.5">
+                <p className="mb-1 px-1 text-[10px] tracking-[0.14em] text-muted uppercase">Bank · one loan</p>
+                <div className="grid grid-cols-3 gap-1">
+                  {hud.loanOffers.map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => e?.takeLoan(o.id)}
+                      className="rounded-md border border-border bg-surface px-1 py-1.5 text-center hover:border-accent"
+                    >
+                      <span className="block text-[10px] text-muted">{o.name}</span>
+                      <span className="block text-xs font-semibold text-accent tabular-nums">+{o.amount}g</span>
+                      <span className="block text-[10px] text-faint">{Math.round(o.interest * 100)}% · owe {o.repay}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <p className="text-[10px] tracking-[0.16em] text-muted uppercase">Towers</p>
             <div className={`flex gap-1.5 ${hud.selected ? "flex-row flex-wrap" : "overflow-x-auto pb-0.5 lg:flex-col lg:overflow-hidden"}`}>
               {TOWER_ORDER.map((id, i) => (
@@ -659,7 +693,7 @@ function TitleOverlay({
   );
 }
 
-const CODEX_TABS = ["How to play", "Towers", "Villains", "Economy", "Lands"] as const;
+const CODEX_TABS = ["How to play", "Towers", "Villains", "Economy", "Loans", "Lands"] as const;
 type CodexTab = (typeof CODEX_TABS)[number];
 
 const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
@@ -783,7 +817,8 @@ function Codex({ onClose }: { onClose: () => void }) {
                 Progress saves on this device. Codex is also on the title screen. Combat pauses while this book is open.
                 If the board is thin (few towers, little gold) the next wave spawns fewer villains, slower. A wipe that
                 leaves you with one post or none grants rebuild aid so you can plant a Scratch Post. Wave clear also
-                pays extra rebuild gold when two or fewer towers still stand.
+                pays extra rebuild gold when two or fewer towers still stand. If gold plus standing towers is thin, the
+                Bank offers one Low / Mid / High loan. Codex → Loans.
               </p>
             </div>
           ) : null}
@@ -858,6 +893,38 @@ function Codex({ onClose }: { onClose: () => void }) {
               <li>That scrap stacks on top of the land-clear gold bonus. You also gain +3 lives (capped a little above the start).</li>
               <li>Progress is local to this browser until you add a cloud account.</li>
             </ul>
+          ) : null}
+          {tab === "Loans" ? (
+            <div className="grid gap-3">
+              <p>
+                The village bank opens only when you are down bad: gold plus the gold invested in standing towers sits
+                under {loanPovertyLine(0)}g on land 1, and the line rises about 38g per land. One loan at a time. A
+                second note is refused until the first is paid in full with interest.
+              </p>
+              <p>
+                Three notes, bigger on later lands. Interest is added up front (you owe principal + interest). A slice
+                of every villain bounty (and leak gold) is garnished until the debt hits zero.
+              </p>
+              <div className="grid gap-2">
+                {LOAN_TIERS.map((t) => (
+                  <div key={t.id} className="rounded-lg border border-border bg-raised/50 p-3">
+                    <h3 className="text-fg font-semibold">{t.name} note</h3>
+                    <p className="text-[11px] text-faint">
+                      Land 1: {loanPrincipal(0, t.id)}g · land 5: {loanPrincipal(4, t.id)}g · land 10:{" "}
+                      {loanPrincipal(9, t.id)}g
+                    </p>
+                    <p className="mt-1">
+                      Interest {Math.round(t.interest * 100)}%. Garnish {Math.round(t.garnish * 100)}% of opponent gold
+                      until repaid.
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p>
+                High is a lot of posts right now and a long garnish. Low is a Scratch Post and a Yarn with a light bite.
+                Land-clear purses and scrap are not garnished — that gold is yours to rebuild.
+              </p>
+            </div>
           ) : null}
           {tab === "Lands" ? (
             <div className="grid gap-2">

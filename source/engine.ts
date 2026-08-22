@@ -26,10 +26,15 @@ import {
   ATK_COLOR,
   cellCenter,
   levelAdvanceGold,
+  LOAN_TIERS,
+  loanPrincipal,
+  loanRepay,
+  loanPovertyLine,
   type EnemyId,
   type TowerId,
   type LevelDef,
   type AtkKind,
+  type LoanTier,
 } from "./config";
 import { AudioBus } from "./audio";
 
@@ -54,6 +59,8 @@ type SaveBlob = {
   occ: string[];
   towers: Tower[];
   enemies: Enemy[];
+  loanDebt?: number;
+  loanGarnish?: number;
 };
 
 function readSave(): SaveBlob | null {
@@ -117,6 +124,17 @@ export type Hud = {
   ready: boolean;
   loadProgress: number;
   hasSave: boolean;
+  loanDebt: number;
+  loanGarnish: number;
+  loanCan: boolean;
+  loanOffers: {
+    id: LoanTier;
+    name: string;
+    amount: number;
+    interest: number;
+    garnish: number;
+    repay: number;
+  }[];
 };
 
 type Enemy = {
@@ -306,6 +324,8 @@ export class GizmoEngine {
   private prePause: Phase = "build";
   private gold = START_GOLD;
   private lives = START_LIVES;
+  private loanDebt = 0;
+  private loanGarnish = 0;
   private wave = 1;
   private levelIndex = 0;
   private speed: 1 | 2 = 1;
@@ -457,6 +477,8 @@ export class GizmoEngine {
     this.audio.unlock();
     this.gold = START_GOLD;
     this.lives = START_LIVES;
+    this.loanDebt = 0;
+    this.loanGarnish = 0;
     this.wave = 1;
     this.speed = 1;
     this.kills = 0;
@@ -547,6 +569,58 @@ export class GizmoEngine {
   setSpeed(s: 1 | 2) {
     this.speed = s;
     this.emit();
+  }
+
+  takeLoan(tier: LoanTier) {
+    this.audio.unlock();
+    if (this.loanDebt > 0 || !this.loanEligible()) {
+      this.audio.deny();
+      return;
+    }
+    const def = LOAN_TIERS.find((t) => t.id === tier);
+    if (!def) return;
+    const amount = loanPrincipal(this.levelIndex, tier);
+    const repay = loanRepay(amount, def.interest);
+    this.gold += amount;
+    this.loanDebt = repay;
+    this.loanGarnish = def.garnish;
+    this.floats.push({
+      x: WORLD_W / 2,
+      y: 52,
+      text: `${def.name} loan +${amount}g · owe ${repay}g`,
+      life: 1.6,
+      color: "#e6d3b3",
+    });
+    this.emit();
+  }
+
+  private investedStanding() {
+    return this.towers.reduce((n, t) => n + t.invested, 0);
+  }
+
+  private loanEligible() {
+    if (this.loanDebt > 0) return false;
+    if (this.phase === "title" || this.phase === "defeat" || this.phase === "victory") return false;
+    return this.gold + this.investedStanding() < loanPovertyLine(this.levelIndex);
+  }
+
+  private creditKillGold(amount: number, x: number, y: number) {
+    let pay = Math.max(0, amount);
+    if (this.loanDebt > 0 && pay > 0) {
+      const cut = Math.min(this.loanDebt, Math.max(1, Math.round(pay * this.loanGarnish)));
+      this.loanDebt -= cut;
+      pay -= cut;
+      if (cut > 0) {
+        this.floats.push({ x, y: y - 50, text: `loan −${cut}`, life: 0.7, color: "#c9a07a" });
+      }
+      if (this.loanDebt <= 0) {
+        this.loanDebt = 0;
+        this.loanGarnish = 0;
+        this.floats.push({ x, y: y - 64, text: "loan cleared", life: 1.15, color: "#7d9a78" });
+      }
+    }
+    this.gold += pay;
+    return pay;
   }
 
   advance() {
@@ -1249,9 +1323,9 @@ export class GizmoEngine {
     this.shake = 10;
     this.audio.leak();
     const refund = Math.max(1, Math.round(e.gold * 0.25));
-    this.gold += refund;
+    const paid = this.creditKillGold(refund, e.x, e.y);
     this.floats.push({ x: e.x, y: e.y - 20, text: "-1 life", life: 0.9, color: "#c45c4a" });
-    this.floats.push({ x: e.x, y: e.y - 38, text: `+${refund}g`, life: 0.9, color: "#e6d3b3" });
+    this.floats.push({ x: e.x, y: e.y - 38, text: `+${paid}g`, life: 0.9, color: "#e6d3b3" });
     if (this.lives <= 0) {
       this.phase = "defeat";
       this.audio.lose();
@@ -1487,9 +1561,9 @@ export class GizmoEngine {
       e.death = 0.42;
       e.flash = 0.1;
       this.kills++;
-      this.gold += e.gold;
+      const paid = this.creditKillGold(e.gold, e.x, e.y);
       this.audio.kill();
-      this.floats.push({ x: e.x, y: e.y - 16, text: `+${e.gold}`, life: 0.7, color: "#e6d3b3" });
+      this.floats.push({ x: e.x, y: e.y - 16, text: `+${paid}`, life: 0.7, color: "#e6d3b3" });
       if (e.type === "warlord") {
         const gain = 2;
         const cap = START_LIVES + 10;
@@ -1718,6 +1792,20 @@ export class GizmoEngine {
       ready: this.ready,
       loadProgress: this.loadProgress,
       hasSave: Boolean(readSave()),
+      loanDebt: this.loanDebt,
+      loanGarnish: this.loanGarnish,
+      loanCan: this.loanEligible(),
+      loanOffers: LOAN_TIERS.map((t) => {
+        const amount = loanPrincipal(this.levelIndex, t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          amount,
+          interest: t.interest,
+          garnish: t.garnish,
+          repay: loanRepay(amount, t.interest),
+        };
+      }),
     });
     if (
       this.phase === "build" ||
@@ -1770,6 +1858,8 @@ export class GizmoEngine {
       enemies: this.enemies
         .filter((e) => e.alive || e.death > 0)
         .map((e) => ({ ...e })),
+      loanDebt: this.loanDebt,
+      loanGarnish: this.loanGarnish,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(blob));
@@ -1785,6 +1875,8 @@ export class GizmoEngine {
     this.applyLevel(idx);
     this.gold = data.gold;
     this.lives = data.lives;
+    this.loanDebt = Math.max(0, (data.loanDebt ?? 0) | 0);
+    this.loanGarnish = Math.max(0, Number(data.loanGarnish ?? 0) || 0);
     this.wave = Math.max(1, Math.min(WAVES_PER_LEVEL, data.wave | 0));
     this.speed = data.speed === 2 ? 2 : 1;
     this.kills = data.kills | 0;

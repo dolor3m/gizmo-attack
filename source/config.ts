@@ -1137,3 +1137,32 @@ export function cellCenter(c: number, r: number) {
 export function levelAdvanceGold(levelIndex: number) {
   return 280 + levelIndex * 55;
 }
+
+export type LoanTier = "low" | "mid" | "high";
+
+export const LOAN_TIERS: {
+  id: LoanTier;
+  name: string;
+  interest: number;
+  garnish: number;
+}[] = [
+  { id: "low", name: "Low", interest: 0.12, garnish: 0.18 },
+  { id: "mid", name: "Mid", interest: 0.22, garnish: 0.28 },
+  { id: "high", name: "High", interest: 0.35, garnish: 0.38 },
+];
+
+export function loanPrincipal(levelIndex: number, tier: LoanTier) {
+  const i = Math.max(0, levelIndex);
+  if (tier === "low") return 80 + i * 28;
+  if (tier === "mid") return 140 + i * 48;
+  return 220 + i * 75;
+}
+
+export function loanRepay(principal: number, interest: number) {
+  return Math.round(principal * (1 + interest));
+}
+
+/** Loan window opens when gold + invested standing towers sit under this. */
+export function loanPovertyLine(levelIndex: number) {
+  return 110 + Math.max(0, levelIndex) * 38;
+}
