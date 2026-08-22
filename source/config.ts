@@ -1146,9 +1146,9 @@ export const LOAN_TIERS: {
   interest: number;
   garnish: number;
 }[] = [
-  { id: "low", name: "Low", interest: 0.12, garnish: 0.18 },
-  { id: "mid", name: "Mid", interest: 0.22, garnish: 0.28 },
-  { id: "high", name: "High", interest: 0.35, garnish: 0.38 },
+  { id: "low", name: "Low", interest: 0.06, garnish: 0.18 },
+  { id: "mid", name: "Mid", interest: 0.11, garnish: 0.28 },
+  { id: "high", name: "High", interest: 0.175, garnish: 0.38 },
 ];
 
 export function loanPrincipal(levelIndex: number, tier: LoanTier) {

@@ -158,6 +158,8 @@ type Enemy = {
   atkCd: number;
   face: number;
   burn: number;
+  confuseUntil: number;
+  shredUntil: number;
 };
 
 type Tower = {
@@ -207,7 +209,7 @@ type Beam = { x1: number; y1: number; x2: number; y2: number; life: number; colo
 type Puff = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string };
 type Floater = { x: number; y: number; text: string; life: number; color: string };
 type AttackFx = {
-  kind: "spell" | "crack" | "swipe" | "quake" | "slash" | "mist" | "boom" | "yarn";
+  kind: "spell" | "crack" | "swipe" | "quake" | "slash" | "mist" | "boom" | "yarn" | "dslash" | "bow" | "spin" | "ring";
   x: number;
   y: number;
   x2: number;
@@ -216,6 +218,7 @@ type AttackFx = {
   ang: number;
   life: number;
   max: number;
+  color: string;
 };
 type Hazard = {
   kind: "sand" | "fountain" | "lava";
@@ -1070,6 +1073,8 @@ export class GizmoEngine {
       atkCd: 0.4 + Math.random() * 0.5,
       face: (ndx < 0 ? 1 : -1) * def.faceNative,
       burn: 0,
+      confuseUntil: 0,
+      shredUntil: 0,
     });
   }
 
@@ -1085,24 +1090,24 @@ export class GizmoEngine {
       e.atkCd -= dt;
       if (e.burn > 0) {
         e.burn -= dt;
-        e.hp -= 16 * dt * (1 - e.armor);
+        e.hp -= 32 * dt * (1 - e.armor);
         if (e.hp <= 0) this.hurt(e, 1, e.x, e.y);
-        if (Math.random() < dt * 8) {
+        if (Math.random() < dt * 14) {
           this.puffs.push({
-            x: e.x + (Math.random() - 0.5) * 10,
-            y: e.y - 18,
-            vx: 0,
-            vy: -30,
-            life: 0.28,
-            max: 0.28,
-            size: 4,
-            color: "#d4785a",
+            x: e.x + (Math.random() - 0.5) * 14,
+            y: e.y - 14 - Math.random() * 10,
+            vx: (Math.random() - 0.5) * 20,
+            vy: -40 - Math.random() * 30,
+            life: 0.4,
+            max: 0.4,
+            size: 6 + Math.random() * 5,
+            color: Math.random() > 0.5 ? "#d4785a" : "#f0c4a0",
           });
         }
       }
       const cell = `${Math.floor(e.x / CELL)},${Math.floor(e.y / CELL)}`;
       const wet = this.water.has(cell) ? 0.62 : 1;
-      const slow = (this.time < e.slowUntil ? 0.5 : 1) * wet;
+      const slow = (this.time < e.slowUntil ? 0.45 : 1) * wet;
       if (e.wp >= pts.length) {
         this.leak(e);
         continue;
@@ -1130,15 +1135,20 @@ export class GizmoEngine {
   private tryEnemyAttack(e: Enemy) {
     if (e.atkCd > 0) return;
     const def = ENEMIES[e.type];
-    const range = def.atkRange * CELL;
+    const confused = this.time < (e.confuseUntil || 0);
+    const range = def.atkRange * CELL * (confused ? 0.6 : 1);
     const target = this.nearestTower(e.x, e.y, range);
     if (!target) return;
-    e.atkCd = 1 / def.atkRate;
+    e.atkCd = 1 / (def.atkRate * (confused ? 0.55 : 1));
     const dmg = def.atkDmg * this.level.atkMult;
     if (e.type === "sorcerer") this.sorcererCast(e, target, dmg, range);
     else if (e.type === "ork") this.orkCrack(e, target, dmg);
     else if (e.type === "tyrant") this.tyrantSwipe(e, target, dmg, range);
     else if (e.type === "warlord") this.warlordQuake(e, dmg, range);
+    else if (e.type === "warrior") this.warriorCut(e, target, dmg);
+    else if (e.type === "archer") this.archerBow(e, target, dmg, def.atkKind, def.atkSplash * CELL);
+    else if (e.type === "mage") this.mageRing(e, target, dmg, range, def.atkKind, def.atkSplash * CELL);
+    else if (e.type === "cavalry") this.horsemanRing(e, target, dmg, range, def.atkKind, def.atkSplash * CELL);
     else this.enemyFire(e, target, dmg, def.atkKind, def.atkSplash * CELL);
   }
 
@@ -1169,7 +1179,32 @@ export class GizmoEngine {
       ang: extra.ang ?? 0,
       life: max,
       max,
+      color: extra.color ?? "",
     });
+  }
+
+  private warriorCut(e: Enemy, target: Tower, dmg: number) {
+    this.audio.foeShoot("stab");
+    const ang = Math.atan2(target.y - e.y, target.x - e.x);
+    this.pushFx("dslash", e.x, e.y, { r: CELL * 1.15, ang: ang - 0.35, max: 0.28 });
+    this.pushFx("dslash", e.x, e.y, { r: CELL * 1.2, ang: ang + 0.4, max: 0.32 });
+    this.hurtTower(target, dmg);
+  }
+
+  private archerBow(e: Enemy, target: Tower, dmg: number, kind: AtkKind, splash: number) {
+    const ang = Math.atan2(target.y - e.y, target.x - e.x);
+    this.pushFx("bow", e.x, e.y - 8, { x2: target.x, y2: target.y - 12, ang, r: 16, max: 0.42 });
+    this.enemyFire(e, target, dmg, kind, splash);
+  }
+
+  private mageRing(e: Enemy, target: Tower, dmg: number, range: number, kind: AtkKind, splash: number) {
+    this.pushFx("ring", e.x, e.y, { r: range * 0.55, max: 0.55, color: "#e6c45a" });
+    this.enemyFire(e, target, dmg, kind, splash);
+  }
+
+  private horsemanRing(e: Enemy, target: Tower, dmg: number, range: number, kind: AtkKind, splash: number) {
+    this.pushFx("ring", e.x, e.y, { r: range * 0.5, max: 0.5, color: "#c4b48a" });
+    this.enemyFire(e, target, dmg, kind, splash);
   }
 
   private sorcererCast(e: Enemy, target: Tower, dmg: number, range: number) {
@@ -1366,7 +1401,7 @@ export class GizmoEngine {
     this.audio.shoot(def.kind);
     if (def.kind === "beam") {
       this.hurt(target, dmg, t.x, t.y);
-      target.burn = Math.max(target.burn, 1.35);
+      target.burn = Math.max(target.burn, 2.6);
       this.beams.push({ x1: t.x, y1: t.y - 18, x2: target.x, y2: target.y - 8, life: 0.16, color: "#d4785a" });
       this.beams.push({ x1: t.x + 3, y1: t.y - 16, x2: target.x + 2, y2: target.y - 6, life: 0.1, color: "#f0c4a0" });
       return;
@@ -1375,6 +1410,7 @@ export class GizmoEngine {
       this.hurt(target, dmg, t.x, t.y);
       const ang = Math.atan2(target.y - t.y, target.x - t.x);
       this.pushFx("slash", t.x, t.y, { r: CELL * 1.15, ang, max: 0.22 });
+      this.pushFx("slash", target.x, target.y, { r: CELL * 0.7, ang: ang + 0.5, max: 0.2 });
       if (def.splash > 0) {
         const r = def.splash * CELL;
         for (const e of this.enemies) {
@@ -1416,7 +1452,7 @@ export class GizmoEngine {
         if (!e.alive) continue;
         if (hypot2(target.x, target.y, e.x, e.y) <= r * r) {
           this.hurt(e, dmg, t.x, t.y);
-          e.slowUntil = Math.max(e.slowUntil, this.time + def.slowTime);
+          e.confuseUntil = Math.max(e.confuseUntil, this.time + 2.6);
         }
       }
       return;
@@ -1512,7 +1548,10 @@ export class GizmoEngine {
     if (s.splash > 0) {
       for (const e of this.enemies) {
         if (!e.alive) continue;
-        if (hypot2(s.x, s.y, e.x, e.y) <= s.splash * s.splash) this.hurt(e, s.dmg, s.x, s.y);
+        if (hypot2(s.x, s.y, e.x, e.y) <= s.splash * s.splash) {
+          this.hurt(e, s.dmg, s.x, s.y);
+          e.shredUntil = Math.max(e.shredUntil, this.time + 3.2);
+        }
       }
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
@@ -1528,9 +1567,13 @@ export class GizmoEngine {
         });
       }
       this.pushFx("boom", s.x, s.y, { r: Math.max(18, s.splash), max: 0.38 });
+      this.pushFx("spin", s.x, s.y, { r: Math.max(22, s.splash), max: 0.7 });
     } else {
       const tgt = this.enemies.find((e) => e.id === s.targetId && e.alive);
-      if (tgt) this.hurt(tgt, s.dmg, s.x, s.y);
+      if (tgt) {
+        this.hurt(tgt, s.dmg, s.x, s.y);
+        tgt.slowUntil = Math.max(tgt.slowUntil, this.time + 2.4);
+      }
       if (s.kind === "homing") {
         this.pushFx("yarn", s.x, s.y, { x2: s.x + 8, y2: s.y - 10, r: 16, max: 0.4 });
         for (let i = 0; i < 6; i++) {
@@ -1552,7 +1595,8 @@ export class GizmoEngine {
 
   private hurt(e: Enemy, raw: number, _sx: number, _sy: number) {
     if (!e.alive) return;
-    const dmg = raw * (1 - e.armor);
+    const arm = this.time < (e.shredUntil || 0) ? e.armor * 0.5 : e.armor;
+    const dmg = raw * (1 - arm);
     e.hp -= dmg;
     e.flash = 0.12;
     this.audio.hit();
@@ -1895,7 +1939,12 @@ export class GizmoEngine {
         }))
       : [];
     this.enemies = Array.isArray(data.enemies)
-      ? data.enemies.map((e) => ({ ...e, burn: e.burn ?? 0 }))
+      ? data.enemies.map((e) => ({
+          ...e,
+          burn: e.burn ?? 0,
+          confuseUntil: e.confuseUntil ?? 0,
+          shredUntil: e.shredUntil ?? 0,
+        }))
       : [];
     this.occ = new Set(data.occ || []);
     this.shots = [];
@@ -2320,6 +2369,83 @@ export class GizmoEngine {
         ctx.beginPath();
         ctx.arc(f.x, f.y, 4 + (1 - u) * 3, 0, Math.PI * 2);
         ctx.fill();
+      } else if (f.kind === "dslash") {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(f.ang);
+        ctx.strokeStyle = `rgba(230,211,179,${u})`;
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(6, -4, f.r * 0.7, -0.95, 0.55);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(196,92,74,${u * 0.85})`;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(4, 6, f.r * 0.62, -0.4, 1.1);
+        ctx.stroke();
+        ctx.restore();
+      } else if (f.kind === "bow") {
+        const p = 1 - u;
+        const x = f.x + (f.x2 - f.x) * p;
+        const y = f.y + (f.y2 - f.y) * p;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(f.ang);
+        ctx.strokeStyle = `rgba(139,90,43,${u})`;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(0, 0, 11, -1.15, 1.15);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(230,211,179,${u * 0.9})`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(0, 10);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(14, 0);
+        ctx.stroke();
+        ctx.restore();
+      } else if (f.kind === "spin") {
+        const r = f.r * (0.55 + t * 0.5);
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(this.time * 7);
+        ctx.strokeStyle = `rgba(176,137,104,${u * 0.9})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = `rgba(212,120,90,${u * 0.55})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.72, this.time * 4, this.time * 4 + 4);
+        ctx.stroke();
+        ctx.restore();
+      } else if (f.kind === "ring") {
+        const col = f.color || "#e6c45a";
+        const r = f.r * (0.3 + t * 0.75);
+        ctx.strokeStyle = col.replace(")", `,${u})`).includes("rgba") ? col : `rgba(230,196,90,${u * 0.85})`;
+        if (col.startsWith("#")) {
+          const n = col.replace("#", "");
+          const rr = parseInt(n.slice(0, 2), 16);
+          const gg = parseInt(n.slice(2, 4), 16);
+          const bb = parseInt(n.slice(4, 6), 16);
+          ctx.strokeStyle = `rgba(${rr},${gg},${bb},${u * 0.88})`;
+        }
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, r * 0.62, this.time * 5, this.time * 5 + 3.2);
+        ctx.stroke();
       }
     }
   }
@@ -2442,6 +2568,33 @@ export class GizmoEngine {
     ctx.filter = "none";
     ctx.restore();
     if (e.alive) {
+      if (this.time < (e.slowUntil || 0)) {
+        ctx.strokeStyle = "rgba(212,120,90,0.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y - 6, 16, 10, this.time * 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (this.time < (e.confuseUntil || 0)) {
+        ctx.strokeStyle = "rgba(125,154,120,0.8)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y - CELL * e.scale * 0.7, 7, this.time * 6, this.time * 6 + 4.2);
+        ctx.stroke();
+      }
+      if (e.burn > 0) {
+        ctx.fillStyle = "rgba(212,120,90,0.45)";
+        ctx.beginPath();
+        ctx.arc(e.x + Math.sin(this.time * 9) * 4, e.y - 18, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (this.time < (e.shredUntil || 0)) {
+        ctx.strokeStyle = "rgba(140,90,40,0.75)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 18 * e.scale, 0.2, 2.4);
+        ctx.stroke();
+      }
       const w = 28 * e.scale + 10;
       const hp = Math.max(0, e.hp / e.maxHp);
       ctx.fillStyle = "rgba(0,0,0,0.45)";

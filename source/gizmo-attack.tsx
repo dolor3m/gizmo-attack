@@ -698,15 +698,15 @@ type CodexTab = (typeof CODEX_TABS)[number];
 
 const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
   archer: {
-    effect: "Longbow. Picks a post from range. No hex.",
+    effect: "Flying Bow. The bow itself sails at the post, then the arrow bites. Damage only.",
     lore: "Garden sentries who turned their bows on the village after the Warlord’s call. Paper-thin, but they never miss a lonely post.",
   },
   warrior: {
-    effect: "Twin daggers. Melee stab on the nearest tower.",
+    effect: "Twin Cut. Two overlapping dagger slashes on the nearest post. Damage only.",
     lore: "Field knives and a grin. They rush the palisade and cut whatever is closest. Cheap to stop, costly if they swarm.",
   },
   mage: {
-    effect: "Yellow-orb bolt. Slow caster, long range.",
+    effect: "Yellow Ring. A short spell circle around the mage, then the orb bolt. Damage only — no hex.",
     lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
   },
   ork: {
@@ -714,7 +714,7 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
   },
   cavalry: {
-    effect: "Lance poke. Fastest heavy. Hits as the horse blows by.",
+    effect: "Lance Ring. A tight steel circle as the horse blows by, then the spear. Damage only.",
     lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
   },
   sorcerer: {
@@ -733,23 +733,23 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
 
 const TOWER_LORE: Record<TowerId, { effect: string; lore: string }> = {
   scratch: {
-    effect: "Claw Swipe. Fast melee plus a small cleave on neighbors.",
+    effect: "Claw Swipe. Fast melee plus a small cleave. Scratch marks only — no extra status.",
     lore: "A rubbing post planted like a spear. Cats remember it; villains learn it. Cheap, tanky, and it shreds the lane lip.",
   },
   yarn: {
-    effect: "Yarn Spindle. Homing ball of yarn that corkscrews to the target.",
+    effect: "Yarn Wrap. Homing spindle. On hit the yarn binds them: −55% move speed for 2.4s.",
     lore: "A siege cannon stuffed with leftover knitting. The ball never forgets a face. Mid range, honest damage.",
   },
   laser: {
-    effect: "Hot Dot. Instant beam, then a burn that ticks for ~1.3s.",
+    effect: "Hot Dot. Instant beam, then a heavy burn: they keep losing HP for ~2.6s.",
     lore: "A pointer stolen from a reading lamp. Fragile wood, cruel light. Best on armored hulls that outrun yarn.",
   },
   catnip: {
-    effect: "Catnip Mist. Thick green fog burst. Damages a cluster and slows them.",
+    effect: "Catnip Mist. Thick green fog. Confuses a cluster: −40% attack range and −45% attack rate for 2.6s. Does not slow feet.",
     lore: "A crate of the good stuff. Villains wander, sneeze, and forget why they were running. Pair it with mortar.",
   },
   mortar: {
-    effect: "Hairball Boom. Arcing splash. Fat explosion on impact.",
+    effect: "Hairball Spin. Arcing splash. A spinning ring where it lands; enemies inside lose half their armor for 3.2s.",
     lore: "A cauldron that coughs hairballs over walls. Slow to wind, rude to crowds, stout as a barn.",
   },
 };
@@ -936,8 +936,9 @@ function Codex({ onClose }: { onClose: () => void }) {
                 <li>Hedges, cliffs, and mazes starve you of plant tiles. Place early, spend later.</li>
               </ul>
               <p>
-                Strategy: scratch + yarn hold the first lands. Laser burns Tyrants and Warlords. Catnip sets up mortar
-                shots. Keep one cheap post as bait so Ork cracks and Sorcerer hexes do not land on your only laser.
+                Strategy: scratch + yarn hold the first lands. Laser burns Tyrants and Warlords. Catnip confuses casters
+                so their hexes fire slower. Mortar shreds armor for the laser. Keep one cheap post as bait so Ork cracks
+                and Sorcerer hexes do not land on your only laser.
               </p>
             </div>
           ) : null}
