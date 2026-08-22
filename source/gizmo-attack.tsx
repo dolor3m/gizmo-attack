@@ -774,9 +774,10 @@ function Codex({ onClose }: { onClose: () => void }) {
               </p>
               <p>
                 You begin with {START_LIVES} lives and {START_GOLD} gold. Each land has {WAVES_PER_LEVEL} waves. Clear
-                the set to march on — towers stay behind. You are paid a scrap purse: 33% of each leftover post’s
-                invested gold, scaled by the hull it still had. Gold and lives travel. From land 2, a few more creeps
-                spawn each map. Villain base stats stay the same; specials and counts do the work.
+                the set to march on — towers stay behind. You get a fresh-start purse (280g after land 1, more on later
+                lands) plus a scrap of 33% of each leftover post’s invested gold, scaled by remaining hull. If that still
+                sits under a floor, gold is topped up so you can plant again. Gold and lives travel. From land 2, a few
+                more creeps spawn each map. Villain base stats stay the same; specials and counts do the work.
               </p>
               <p>
                 Progress saves on this device. Codex is also on the title screen. Combat pauses while this book is open.
@@ -853,7 +854,7 @@ function Codex({ onClose }: { onClose: () => void }) {
               <li>The next wave watches your board. Few towers or a thin stash means fewer villains, spaced further apart (never below ~62% of the listed wave). A healthy battery fights the full roster. You will see “the path thins — rebuild” when mercy is on.</li>
               <li>Wave clear pays extra rebuild gold if two or fewer posts remain (24g per missing post below 3).</li>
               <li>Repair: twice per post. Cost = buy × missing HP × 0.55 × (1st ×1, 2nd ×1.85).</li>
-              <li>When you leave a land, leftover towers scrap for 33% of gold invested, multiplied by remaining HP (a full-health yarn returns 33% of what you spent on it; a half-dead one returns half of that).</li>
+              <li>When you leave a land, leftover towers scrap for 33% of gold invested, multiplied by remaining HP. On top of that you get a fresh-start purse: 280g after the first land, +55g per land after that. If gold would still sit below 260g + 30g per land, it is topped up to that floor so you can rebuild a core (Scratch + Yarn + more as lands go on).</li>
               <li>That scrap stacks on top of the land-clear gold bonus. You also gain +3 lives (capped a little above the start).</li>
               <li>Progress is local to this browser until you add a cloud account.</li>
             </ul>

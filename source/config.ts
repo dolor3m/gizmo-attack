@@ -1135,5 +1135,5 @@ export function cellCenter(c: number, r: number) {
 }
 
 export function levelAdvanceGold(levelIndex: number) {
-  return 55 + levelIndex * 28;
+  return 280 + levelIndex * 55;
 }

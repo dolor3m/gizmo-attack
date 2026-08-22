@@ -564,6 +564,8 @@ export class GizmoEngine {
       return n + Math.floor(t.invested * 0.33 * hpRatio);
     }, 0);
     this.gold += bonus + scrap;
+    const floor = 260 + next * 30;
+    if (this.gold < floor) this.gold = floor;
     this.lives = Math.min(START_LIVES + 6, this.lives + 3);
     this.wave = 1;
     this.shop = null;
@@ -581,7 +583,10 @@ export class GizmoEngine {
     this.floats.push({
       x: WORLD_W / 2,
       y: 48,
-      text: scrap > 0 ? `${this.level.name} · +${bonus}g · scrap +${scrap}g` : `${this.level.name} · +${bonus}g`,
+      text:
+        scrap > 0
+          ? `${this.level.name} · purse +${bonus}g · scrap +${scrap}g`
+          : `${this.level.name} · purse +${bonus}g`,
       life: 1.8,
       color: "#e6d3b3",
     });
@@ -944,9 +949,6 @@ export class GizmoEngine {
       this.tickShots(dt);
       this.tickFx(dt);
       this.checkWaveEnd();
-    } else {
-      this.tickEnemies(dt);
-      this.tickFx(dt);
     }
   }
 
@@ -1629,6 +1631,13 @@ export class GizmoEngine {
     this.enemies = this.enemies.filter((e) => e.alive || e.death > 0);
   }
 
+  private clearVfx() {
+    this.shots = [];
+    this.beams = [];
+    this.puffs = [];
+    this.fx = [];
+  }
+
   private checkWaveEnd() {
     if (this.phase !== "combat") return;
     if (this.spawning) return;
@@ -1643,6 +1652,7 @@ export class GizmoEngine {
       }
       this.phase = "advance";
       this.audio.win();
+      this.clearVfx();
       this.emit();
       return;
     }
@@ -1651,6 +1661,7 @@ export class GizmoEngine {
     this.gold += bonus + rebuild;
     this.wave += 1;
     this.phase = "build";
+    this.clearVfx();
     this.floats.push({
       x: WORLD_W / 2,
       y: 40,
