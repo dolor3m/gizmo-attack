@@ -231,10 +231,12 @@ export function GizmoAttack() {
                     onClick={() => e?.startWave()}
                     className="rounded-md bg-sage px-3 py-1.5 text-xs font-semibold text-sage-fg"
                   >
-                    Start wave {hud.wave}
+                    Start wave {hud.wave} · Land {hud.level}/{hud.levels}
                   </button>
                 ) : (
-                  <span className="px-2 text-xs text-muted">{hud.remaining} on the path</span>
+                  <span className="px-2 text-xs text-muted">
+                    {hud.remaining} on the path · Land {hud.level}/{hud.levels}
+                  </span>
                 )}
                 <span className="max-w-[9rem] truncate px-1 text-[11px] text-faint">{hud.levelName}</span>
                 <button
@@ -273,7 +275,7 @@ export function GizmoAttack() {
               <Stat icon={<Heart className="size-3" />} label="Lives" value={hud.lives} danger={hud.lives <= 5} />
               <Stat label="Gold" value={hud.gold} gold />
               <Stat label="Land" value={`${hud.level}/${hud.levels}`} />
-              <Stat label="Wave" value={`${hud.wave}/${hud.waves}`} />
+              <Stat label="Wave" value={`${hud.level} · ${hud.wave}/${hud.waves}`} />
             </div>
             {hud.loanDebt > 0 ? (
               <p className="rounded-md border border-border bg-raised/60 px-2 py-1 text-[11px] text-muted">
@@ -698,15 +700,15 @@ type CodexTab = (typeof CODEX_TABS)[number];
 
 const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
   archer: {
-    effect: "Piercing Bow. The bow flies through the front post and can strike towers behind it on the same line. Damage only; rear posts take a bit less.",
+    effect: "Five Bows. A fan of five: center full power, next pair 70%, outer pair 40%. Each bow stops on the first post it meets — no pierce.",
     lore: "Garden sentries who turned their bows on the village after the Warlord’s call. Paper-thin, but they never miss a lonely post.",
   },
   warrior: {
-    effect: "Twin Cut. Two overlapping dagger slashes. First hit enrages them: +35% attack rate until they leak or die.",
+    effect: "Twin Cut. Two overlapping dagger slashes. First hit enrages them: +18% attack rate until they leak or die.",
     lore: "Field knives and a grin. They rush the palisade and cut whatever is closest. Cheap to stop, costly if they swarm.",
   },
   mage: {
-    effect: "Shockwave. A yellow ring expands across the whole map. Every post is hit; damage falls off with distance from the mage.",
+    effect: "Shockwave. A yellow ring hits every post; damage falls off sharply with distance.",
     lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
   },
   ork: {
@@ -714,7 +716,7 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
   },
   cavalry: {
-    effect: "Lance Ring. Tight steel circle, then the spear. First hit spurs the horse: +18% speed until the village.",
+    effect: "Lance Ring. Tight steel circle, then the spear. First hit spurs the horse: +10% speed until the village.",
     lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
   },
   sorcerer: {
@@ -722,11 +724,11 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Adept of the purple orb. They do not chase posts — they curse the whole battery so the garden shoots slower and shorter.",
   },
   tyrant: {
-    effect: "Axe Swipe. Wide crescent. Weakens tower attack −28% for 4s. Immune to Yarn Wrap. Each hit they take raises their defense 5% (cap +65%).",
+    effect: "Axe Swipe. Wide crescent. Weakens tower attack −28% for 4s. Immune to Yarn Wrap. Each hit they take raises defense 2.5% (cap +30%).",
     lore: "Plate, skull-shield, and a two-handed axe. Slow as a siege, but one swipe leaves every nearby post trembling.",
   },
   warlord: {
-    effect: "Quake Crown. Rocky ring, 1.72× damage. Immune to Yarn, Catnip, Laser burn, and Mortar shred. Each hit they take raises their attack 6% (cap +100%). Kill: +2 lives.",
+    effect: "Quake Crown. Rocky ring, 1.72× damage. Immune to Yarn, Catnip, Laser burn, and Mortar shred. Each hit they take raises attack 3% (cap +35%). Kill: +2 lives.",
     lore: "The grinning commander. When he plants both swords, the earth stands up in a crown of stone. Bring him down and the village cheers you two lives back.",
   },
 };

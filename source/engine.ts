@@ -1030,6 +1030,8 @@ export class GizmoEngine {
       this.tickShots(dt);
       this.tickFx(dt);
       this.checkWaveEnd();
+    } else if (this.shots.length || this.fx.length || this.puffs.length || this.beams.length) {
+      this.clearVfx();
     }
   }
 
@@ -1156,7 +1158,7 @@ export class GizmoEngine {
     else if (e.type === "tyrant") this.tyrantSwipe(e, target, dmg, range);
     else if (e.type === "warlord") this.warlordQuake(e, dmg, range);
     else if (e.type === "warrior") this.warriorCut(e, target, dmg);
-    else if (e.type === "archer") this.archerPierce(e, target, dmg);
+    else if (e.type === "archer") this.archerVolley(e, target, dmg);
     else if (e.type === "mage") this.mageWave(e, target, dmg);
     else if (e.type === "cavalry") this.horsemanRing(e, target, dmg, range, def.atkKind, def.atkSplash * CELL);
     else this.enemyFire(e, target, dmg, def.atkKind, def.atkSplash * CELL);
@@ -1201,36 +1203,45 @@ export class GizmoEngine {
     this.hurtTower(target, dmg);
   }
 
-  private archerPierce(e: Enemy, target: Tower, dmg: number) {
+  private archerVolley(e: Enemy, target: Tower, dmg: number) {
     this.audio.foeShoot("arrow");
-    const ang = Math.atan2(target.y - e.y, target.x - e.x);
-    const reach = ENEMIES.archer.atkRange * CELL * 2.4;
-    const x2 = e.x + Math.cos(ang) * reach;
-    const y2 = e.y - 8 + Math.sin(ang) * reach;
-    this.pushFx("bow", e.x, e.y - 8, { x2, y2, ang, r: 16, max: 0.48 });
-    const hits = this.towers
-      .filter((t) => {
+    const base = Math.atan2(target.y - e.y, target.x - e.x);
+    const reach = ENEMIES.archer.atkRange * CELL * 1.2;
+    const spreads = [-0.34, -0.17, 0, 0.17, 0.34];
+    const power = [0.4, 0.7, 1, 0.7, 0.4];
+    for (let i = 0; i < 5; i++) {
+      const ang = base + spreads[i]!;
+      const x2 = e.x + Math.cos(ang) * reach;
+      const y2 = e.y - 8 + Math.sin(ang) * reach;
+      let hit: Tower | null = null;
+      let hitD = Infinity;
+      for (const t of this.towers) {
         const dx = t.x - e.x;
-        const dy = t.y - e.y;
-        if (dx * Math.cos(ang) + dy * Math.sin(ang) < 8) return false;
-        return distToSeg(t.x, t.y, e.x, e.y - 8, x2, y2) <= 30;
-      })
-      .sort((a, b) => hypot2(e.x, e.y, a.x, a.y) - hypot2(e.x, e.y, b.x, b.y));
-    let fall = 1;
-    for (const t of hits) {
-      this.hurtTower(t, dmg * fall);
-      fall *= 0.7;
+        const dy = t.y - (e.y - 8);
+        if (dx * Math.cos(ang) + dy * Math.sin(ang) < 10) continue;
+        if (distToSeg(t.x, t.y, e.x, e.y - 8, x2, y2) > 26) continue;
+        const d = Math.hypot(dx, dy);
+        if (d < hitD) {
+          hitD = d;
+          hit = t;
+        }
+      }
+      if (hit) {
+        this.pushFx("bow", e.x, e.y - 8, { x2: hit.x, y2: hit.y - 12, ang, r: 14, max: 0.4 });
+        this.hurtTower(hit, dmg * power[i]!);
+      } else {
+        this.pushFx("bow", e.x, e.y - 8, { x2, y2, ang, r: 14, max: 0.36 });
+      }
     }
-    if (!hits.length) this.hurtTower(target, dmg);
   }
 
   private mageWave(e: Enemy, _target: Tower, dmg: number) {
     this.audio.foeShoot("spell");
-    this.pushFx("ring", e.x, e.y, { r: WORLD_W * 0.72, max: 0.9, color: "#e6c45a" });
-    this.pushFx("ring", e.x, e.y, { r: WORLD_W * 0.45, max: 0.7, color: "#f0d878" });
+    this.pushFx("ring", e.x, e.y, { r: CELL * 7.5, max: 0.7, color: "#e6c45a" });
+    this.pushFx("ring", e.x, e.y, { r: CELL * 4.5, max: 0.55, color: "#f0d878" });
     for (const t of [...this.towers]) {
       const dist = Math.hypot(t.x - e.x, t.y - e.y);
-      const fall = Math.max(0.12, 1 / (1 + dist / (CELL * 3)));
+      const fall = Math.max(0.08, 1 / (1 + dist / (CELL * 1.7)));
       this.hurtTower(t, dmg * fall);
     }
   }
@@ -1646,18 +1657,18 @@ export class GizmoEngine {
   private onStruck(e: Enemy) {
     if (!e.alive) return;
     if (e.type === "warlord") {
-      e.atkMul = Math.min(2, (e.atkMul || 1) * 1.06);
+      e.atkMul = Math.min(1.35, (e.atkMul || 1) * 1.03);
     }
     if (e.type === "tyrant") {
-      e.defMul = Math.min(1.65, (e.defMul || 1) * 1.05);
+      e.defMul = Math.min(1.3, (e.defMul || 1) * 1.025);
     }
     if (e.type === "cavalry" && !e.enraged) {
       e.enraged = true;
-      e.speed *= 1.18;
+      e.speed *= 1.1;
     }
     if (e.type === "warrior" && !e.enraged) {
       e.enraged = true;
-      e.atkRateMul = 1.35;
+      e.atkRateMul = 1.18;
     }
   }
 
@@ -2117,7 +2128,7 @@ export class GizmoEngine {
     this.drawDecor();
     this.drawPortal();
     this.drawVault();
-    this.drawAttackFx();
+    if (this.phase === "combat") this.drawAttackFx();
 
     if (this.shop && this.hoverC >= 0) {
       const ok = this.canBuild(this.hoverC, this.hoverR) && this.gold >= TOWERS[this.shop].cost;
@@ -2145,22 +2156,24 @@ export class GizmoEngine {
     for (const t of this.towers) this.drawTower(t);
     this.enemies.sort((a, b) => a.y - b.y);
     for (const e of this.enemies) this.drawEnemy(e);
-    for (const s of this.shots) this.drawShot(s);
-    for (const b of this.beams) {
-      ctx.strokeStyle = `rgba(212,120,90,${Math.min(1, b.life * 8)})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(b.x1, b.y1);
-      ctx.lineTo(b.x2, b.y2);
-      ctx.stroke();
-    }
-    for (const p of this.puffs) {
-      ctx.globalAlpha = Math.max(0, p.life / p.max);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * (p.life / p.max), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+    if (this.phase === "combat") {
+      for (const s of this.shots) this.drawShot(s);
+      for (const b of this.beams) {
+        ctx.strokeStyle = `rgba(212,120,90,${Math.min(1, b.life * 8)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(b.x1, b.y1);
+        ctx.lineTo(b.x2, b.y2);
+        ctx.stroke();
+      }
+      for (const p of this.puffs) {
+        ctx.globalAlpha = Math.max(0, p.life / p.max);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (p.life / p.max), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
     }
     ctx.font = "600 13px Outfit, sans-serif";
     ctx.textAlign = "center";
