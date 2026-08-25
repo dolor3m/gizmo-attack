@@ -231,11 +231,11 @@ export function GizmoAttack() {
                     onClick={() => e?.startWave()}
                     className="rounded-md bg-sage px-3 py-1.5 text-xs font-semibold text-sage-fg"
                   >
-                    Start wave {hud.wave} · Land {hud.level}/{hud.levels}
+                    Land {hud.level}/{hud.levels} • Wave {hud.wave}/{hud.waves} • Start
                   </button>
                 ) : (
                   <span className="px-2 text-xs text-muted">
-                    {hud.remaining} on the path · Land {hud.level}/{hud.levels}
+                    Land {hud.level}/{hud.levels} • Wave {hud.wave}/{hud.waves} • {hud.remaining} on the path
                   </span>
                 )}
                 <span className="max-w-[9rem] truncate px-1 text-[11px] text-faint">{hud.levelName}</span>
@@ -275,7 +275,7 @@ export function GizmoAttack() {
               <Stat icon={<Heart className="size-3" />} label="Lives" value={hud.lives} danger={hud.lives <= 5} />
               <Stat label="Gold" value={hud.gold} gold />
               <Stat label="Land" value={`${hud.level}/${hud.levels}`} />
-              <Stat label="Wave" value={`${hud.level} · ${hud.wave}/${hud.waves}`} />
+              <Stat label="Wave" value={`${hud.wave}/${hud.waves}`} />
             </div>
             {hud.loanDebt > 0 ? (
               <p className="rounded-md border border-border bg-raised/60 px-2 py-1 text-[11px] text-muted">

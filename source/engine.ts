@@ -949,7 +949,7 @@ export class GizmoEngine {
     const tileNames = ["garden", "forest", "castle", "dunes", "magma", "path", "grass", "pad", "water", "lava"];
     const jobs: Promise<HTMLImageElement | null>[] = [
       loadImg("tiles/pad.jpg"),
-      ...ENEMY_IDS.map((id) => loadImg(`enemies/${id}.png?v=11`)),
+      ...ENEMY_IDS.map((id) => loadImg(`enemies/${id}.png?v=12`)),
       ...tids.map((id) => loadImg(`towers/${id}.png`)),
       ...[0, 1, 2, 3].map((i) => loadImg(`fx/yarn-${i}.png`)),
       ...[0, 1, 2, 3].map((i) => loadImg(`fx/hairball-${i}.png`)),
