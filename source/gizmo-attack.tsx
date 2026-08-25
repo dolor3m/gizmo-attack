@@ -698,15 +698,15 @@ type CodexTab = (typeof CODEX_TABS)[number];
 
 const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
   archer: {
-    effect: "Flying Bow. The bow itself sails at the post, then the arrow bites. Damage only.",
+    effect: "Piercing Bow. The bow flies through the front post and can strike towers behind it on the same line. Damage only; rear posts take a bit less.",
     lore: "Garden sentries who turned their bows on the village after the Warlord’s call. Paper-thin, but they never miss a lonely post.",
   },
   warrior: {
-    effect: "Twin Cut. Two overlapping dagger slashes on the nearest post. Damage only.",
+    effect: "Twin Cut. Two overlapping dagger slashes. First hit enrages them: +35% attack rate until they leak or die.",
     lore: "Field knives and a grin. They rush the palisade and cut whatever is closest. Cheap to stop, costly if they swarm.",
   },
   mage: {
-    effect: "Yellow Ring. A short spell circle around the mage, then the orb bolt. Damage only — no hex.",
+    effect: "Shockwave. A yellow ring expands across the whole map. Every post is hit; damage falls off with distance from the mage.",
     lore: "Apprentices of the hedge school. Their starbolts sting from across the fountain. Glass hulls — laser food.",
   },
   ork: {
@@ -714,7 +714,7 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Hill brutes hired as living rams. Every swing splits the turf. A cracked post never quite stands the same.",
   },
   cavalry: {
-    effect: "Lance Ring. A tight steel circle as the horse blows by, then the spear. Damage only.",
+    effect: "Lance Ring. Tight steel circle, then the spear. First hit spurs the horse: +18% speed until the village.",
     lore: "Knight-horsemen of the dusk banner. They are through the bend before the mortar finishes winding.",
   },
   sorcerer: {
@@ -722,11 +722,11 @@ const VILLAIN_LORE: Record<string, { effect: string; lore: string }> = {
     lore: "Adept of the purple orb. They do not chase posts — they curse the whole battery so the garden shoots slower and shorter.",
   },
   tyrant: {
-    effect: "Axe Swipe. Wide crescent. Towers in the arc are Weakened: −28% attack for 4 seconds.",
+    effect: "Axe Swipe. Wide crescent. Weakens tower attack −28% for 4s. Immune to Yarn Wrap. Each hit they take raises their defense 5% (cap +65%).",
     lore: "Plate, skull-shield, and a two-handed axe. Slow as a siege, but one swipe leaves every nearby post trembling.",
   },
   warlord: {
-    effect: "Quake Crown. Rocky ring. Towers inside take 1.72× damage. Killing a Warlord restores 2 lives.",
+    effect: "Quake Crown. Rocky ring, 1.72× damage. Immune to Yarn, Catnip, Laser burn, and Mortar shred. Each hit they take raises their attack 6% (cap +100%). Kill: +2 lives.",
     lore: "The grinning commander. When he plants both swords, the earth stands up in a crown of stone. Bring him down and the village cheers you two lives back.",
   },
 };
@@ -737,19 +737,19 @@ const TOWER_LORE: Record<TowerId, { effect: string; lore: string }> = {
     lore: "A rubbing post planted like a spear. Cats remember it; villains learn it. Cheap, tanky, and it shreds the lane lip.",
   },
   yarn: {
-    effect: "Yarn Wrap. Homing spindle. On hit the yarn binds them: −55% move speed for 2.4s.",
+    effect: "Yarn Wrap. Homing spindle. Binds: −55% move speed for 2.4s. Tyrants and Warlords ignore the wrap.",
     lore: "A siege cannon stuffed with leftover knitting. The ball never forgets a face. Mid range, honest damage.",
   },
   laser: {
-    effect: "Hot Dot. Instant beam, then a heavy burn: they keep losing HP for ~2.6s.",
+    effect: "Hot Dot. Instant beam, then a heavy burn for ~2.6s. Warlords ignore the burn.",
     lore: "A pointer stolen from a reading lamp. Fragile wood, cruel light. Best on armored hulls that outrun yarn.",
   },
   catnip: {
-    effect: "Catnip Mist. Thick green fog. Confuses a cluster: −40% attack range and −45% attack rate for 2.6s. Does not slow feet.",
+    effect: "Catnip Mist. Thick green fog. Confuses a cluster: −40% attack range and −45% attack rate for 2.6s. Does not slow feet. Warlords ignore the fog.",
     lore: "A crate of the good stuff. Villains wander, sneeze, and forget why they were running. Pair it with mortar.",
   },
   mortar: {
-    effect: "Hairball Spin. Arcing splash. A spinning ring where it lands; enemies inside lose half their armor for 3.2s.",
+    effect: "Hairball Spin. Arcing splash. Spinning ring; enemies inside lose half their armor for 3.2s. Warlords ignore the shred.",
     lore: "A cauldron that coughs hairballs over walls. Slow to wind, rude to crowds, stout as a barn.",
   },
 };

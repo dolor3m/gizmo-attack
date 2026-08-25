@@ -160,6 +160,10 @@ type Enemy = {
   burn: number;
   confuseUntil: number;
   shredUntil: number;
+  atkMul: number;
+  defMul: number;
+  atkRateMul: number;
+  enraged: boolean;
 };
 
 type Tower = {
@@ -1075,6 +1079,10 @@ export class GizmoEngine {
       burn: 0,
       confuseUntil: 0,
       shredUntil: 0,
+      atkMul: 1,
+      defMul: 1,
+      atkRateMul: 1,
+      enraged: false,
     });
   }
 
@@ -1090,19 +1098,21 @@ export class GizmoEngine {
       e.atkCd -= dt;
       if (e.burn > 0) {
         e.burn -= dt;
-        e.hp -= 32 * dt * (1 - e.armor);
-        if (e.hp <= 0) this.hurt(e, 1, e.x, e.y);
-        if (Math.random() < dt * 14) {
-          this.puffs.push({
-            x: e.x + (Math.random() - 0.5) * 14,
-            y: e.y - 14 - Math.random() * 10,
-            vx: (Math.random() - 0.5) * 20,
-            vy: -40 - Math.random() * 30,
-            life: 0.4,
-            max: 0.4,
-            size: 6 + Math.random() * 5,
-            color: Math.random() > 0.5 ? "#d4785a" : "#f0c4a0",
-          });
+        if (this.canStatus(e, "burn")) {
+          e.hp -= 32 * dt * (1 - e.armor);
+          if (e.hp <= 0) this.hurt(e, 1, e.x, e.y);
+          if (Math.random() < dt * 14) {
+            this.puffs.push({
+              x: e.x + (Math.random() - 0.5) * 14,
+              y: e.y - 14 - Math.random() * 10,
+              vx: (Math.random() - 0.5) * 20,
+              vy: -40 - Math.random() * 30,
+              life: 0.4,
+              max: 0.4,
+              size: 6 + Math.random() * 5,
+              color: Math.random() > 0.5 ? "#d4785a" : "#f0c4a0",
+            });
+          }
         }
       }
       const cell = `${Math.floor(e.x / CELL)},${Math.floor(e.y / CELL)}`;
@@ -1139,15 +1149,15 @@ export class GizmoEngine {
     const range = def.atkRange * CELL * (confused ? 0.6 : 1);
     const target = this.nearestTower(e.x, e.y, range);
     if (!target) return;
-    e.atkCd = 1 / (def.atkRate * (confused ? 0.55 : 1));
-    const dmg = def.atkDmg * this.level.atkMult;
+    e.atkCd = 1 / (def.atkRate * (e.atkRateMul || 1) * (confused ? 0.55 : 1));
+    const dmg = def.atkDmg * this.level.atkMult * (e.atkMul || 1);
     if (e.type === "sorcerer") this.sorcererCast(e, target, dmg, range);
     else if (e.type === "ork") this.orkCrack(e, target, dmg);
     else if (e.type === "tyrant") this.tyrantSwipe(e, target, dmg, range);
     else if (e.type === "warlord") this.warlordQuake(e, dmg, range);
     else if (e.type === "warrior") this.warriorCut(e, target, dmg);
-    else if (e.type === "archer") this.archerBow(e, target, dmg, def.atkKind, def.atkSplash * CELL);
-    else if (e.type === "mage") this.mageRing(e, target, dmg, range, def.atkKind, def.atkSplash * CELL);
+    else if (e.type === "archer") this.archerPierce(e, target, dmg);
+    else if (e.type === "mage") this.mageWave(e, target, dmg);
     else if (e.type === "cavalry") this.horsemanRing(e, target, dmg, range, def.atkKind, def.atkSplash * CELL);
     else this.enemyFire(e, target, dmg, def.atkKind, def.atkSplash * CELL);
   }
@@ -1189,6 +1199,40 @@ export class GizmoEngine {
     this.pushFx("dslash", e.x, e.y, { r: CELL * 1.15, ang: ang - 0.35, max: 0.28 });
     this.pushFx("dslash", e.x, e.y, { r: CELL * 1.2, ang: ang + 0.4, max: 0.32 });
     this.hurtTower(target, dmg);
+  }
+
+  private archerPierce(e: Enemy, target: Tower, dmg: number) {
+    this.audio.foeShoot("arrow");
+    const ang = Math.atan2(target.y - e.y, target.x - e.x);
+    const reach = ENEMIES.archer.atkRange * CELL * 2.4;
+    const x2 = e.x + Math.cos(ang) * reach;
+    const y2 = e.y - 8 + Math.sin(ang) * reach;
+    this.pushFx("bow", e.x, e.y - 8, { x2, y2, ang, r: 16, max: 0.48 });
+    const hits = this.towers
+      .filter((t) => {
+        const dx = t.x - e.x;
+        const dy = t.y - e.y;
+        if (dx * Math.cos(ang) + dy * Math.sin(ang) < 8) return false;
+        return distToSeg(t.x, t.y, e.x, e.y - 8, x2, y2) <= 30;
+      })
+      .sort((a, b) => hypot2(e.x, e.y, a.x, a.y) - hypot2(e.x, e.y, b.x, b.y));
+    let fall = 1;
+    for (const t of hits) {
+      this.hurtTower(t, dmg * fall);
+      fall *= 0.7;
+    }
+    if (!hits.length) this.hurtTower(target, dmg);
+  }
+
+  private mageWave(e: Enemy, _target: Tower, dmg: number) {
+    this.audio.foeShoot("spell");
+    this.pushFx("ring", e.x, e.y, { r: WORLD_W * 0.72, max: 0.9, color: "#e6c45a" });
+    this.pushFx("ring", e.x, e.y, { r: WORLD_W * 0.45, max: 0.7, color: "#f0d878" });
+    for (const t of [...this.towers]) {
+      const dist = Math.hypot(t.x - e.x, t.y - e.y);
+      const fall = Math.max(0.12, 1 / (1 + dist / (CELL * 3)));
+      this.hurtTower(t, dmg * fall);
+    }
   }
 
   private archerBow(e: Enemy, target: Tower, dmg: number, kind: AtkKind, splash: number) {
@@ -1401,7 +1445,7 @@ export class GizmoEngine {
     this.audio.shoot(def.kind);
     if (def.kind === "beam") {
       this.hurt(target, dmg, t.x, t.y);
-      target.burn = Math.max(target.burn, 2.6);
+      if (this.canStatus(target, "burn")) target.burn = Math.max(target.burn, 2.6);
       this.beams.push({ x1: t.x, y1: t.y - 18, x2: target.x, y2: target.y - 8, life: 0.16, color: "#d4785a" });
       this.beams.push({ x1: t.x + 3, y1: t.y - 16, x2: target.x + 2, y2: target.y - 6, life: 0.1, color: "#f0c4a0" });
       return;
@@ -1452,7 +1496,7 @@ export class GizmoEngine {
         if (!e.alive) continue;
         if (hypot2(target.x, target.y, e.x, e.y) <= r * r) {
           this.hurt(e, dmg, t.x, t.y);
-          e.confuseUntil = Math.max(e.confuseUntil, this.time + 2.6);
+          if (this.canStatus(e, "confuse")) e.confuseUntil = Math.max(e.confuseUntil, this.time + 2.6);
         }
       }
       return;
@@ -1550,7 +1594,7 @@ export class GizmoEngine {
         if (!e.alive) continue;
         if (hypot2(s.x, s.y, e.x, e.y) <= s.splash * s.splash) {
           this.hurt(e, s.dmg, s.x, s.y);
-          e.shredUntil = Math.max(e.shredUntil, this.time + 3.2);
+          if (this.canStatus(e, "shred")) e.shredUntil = Math.max(e.shredUntil, this.time + 3.2);
         }
       }
       for (let i = 0; i < 8; i++) {
@@ -1572,7 +1616,7 @@ export class GizmoEngine {
       const tgt = this.enemies.find((e) => e.id === s.targetId && e.alive);
       if (tgt) {
         this.hurt(tgt, s.dmg, s.x, s.y);
-        tgt.slowUntil = Math.max(tgt.slowUntil, this.time + 2.4);
+        if (this.canStatus(tgt, "slow")) tgt.slowUntil = Math.max(tgt.slowUntil, this.time + 2.4);
       }
       if (s.kind === "homing") {
         this.pushFx("yarn", s.x, s.y, { x2: s.x + 8, y2: s.y - 10, r: 16, max: 0.4 });
@@ -1593,13 +1637,39 @@ export class GizmoEngine {
     }
   }
 
+  private canStatus(e: Enemy, kind: "slow" | "confuse" | "burn" | "shred") {
+    if (e.type === "warlord") return false;
+    if (e.type === "tyrant" && kind === "slow") return false;
+    return true;
+  }
+
+  private onStruck(e: Enemy) {
+    if (!e.alive) return;
+    if (e.type === "warlord") {
+      e.atkMul = Math.min(2, (e.atkMul || 1) * 1.06);
+    }
+    if (e.type === "tyrant") {
+      e.defMul = Math.min(1.65, (e.defMul || 1) * 1.05);
+    }
+    if (e.type === "cavalry" && !e.enraged) {
+      e.enraged = true;
+      e.speed *= 1.18;
+    }
+    if (e.type === "warrior" && !e.enraged) {
+      e.enraged = true;
+      e.atkRateMul = 1.35;
+    }
+  }
+
   private hurt(e: Enemy, raw: number, _sx: number, _sy: number) {
     if (!e.alive) return;
-    const arm = this.time < (e.shredUntil || 0) ? e.armor * 0.5 : e.armor;
-    const dmg = raw * (1 - arm);
+    const shred = this.time < (e.shredUntil || 0) && this.canStatus(e, "shred");
+    const arm = shred ? e.armor * 0.5 : e.armor;
+    const dmg = (raw * (1 - arm)) / Math.max(1, e.defMul || 1);
     e.hp -= dmg;
     e.flash = 0.12;
     this.audio.hit();
+    if (e.hp > 0) this.onStruck(e);
     if (e.hp <= 0) {
       e.alive = false;
       e.death = 0.42;
@@ -1944,6 +2014,10 @@ export class GizmoEngine {
           burn: e.burn ?? 0,
           confuseUntil: e.confuseUntil ?? 0,
           shredUntil: e.shredUntil ?? 0,
+          atkMul: e.atkMul ?? 1,
+          defMul: e.defMul ?? 1,
+          atkRateMul: e.atkRateMul ?? 1,
+          enraged: Boolean(e.enraged),
         }))
       : [];
     this.occ = new Set(data.occ || []);
